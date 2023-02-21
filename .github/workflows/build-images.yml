@@ -1,62 +1,15 @@
-name: Build Images
-#
-# Generates beta, stable or RC images. You can select build runners. By default it generates all images, but you can build images only for one target
-# Images are placed at www.arnmbian.com and nighly beta also at https://github.com/armbian/build/releases/tag/latest
+name: Build Nighly Images
 #
 
 on:
 
-#  schedule:
-#    - cron: "30 0 * * *"
-
+  schedule:
+    - cron: "30 0 * * *"
   workflow_dispatch:
-
-    inputs:
-
-      choice:
-        type: choice
-        description: Build targets
-        options:
-        - beta
-        - stable
-        - rc
-
-      runner:
-        type: choice
-        description: Build runners for CLI
-        options:
-        - small
-        - ubuntu-latest
-
-      sourcerepo:
-        description: Source repository
-        required: false
-        default: 'nightly'
-
-      packagesrepo:
-        type: choice
-        description: Beta packages repository
-        options:
-        - "yes"
-        - "no"
-
-      fromsources:
-        type: choice
-        description: Build from sources
-        options:
-        - "no"
-        - "yes"
-
-      advanced:
-        description: 'Single board (grep -w tinkerboard |)'
-        required: false
-        default: ''
-
-env:
-   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
 
+  # In case we have a currently active build, cancel it
   Cancel:
     name: "Cancel currently active"
     if: ${{ github.repository_owner == 'Armbian' }}
@@ -64,7 +17,6 @@ jobs:
     timeout-minutes: 3
     steps:
       - uses: styfle/cancel-workflow-action@0.11.0
-        if: ${{ github.event.schedule == '' }}
         with:
           all_but_latest: true
           access_token: ${{ secrets.GITHUB_TOKEN }}
@@ -73,20 +25,20 @@ jobs:
 
     if: ${{ github.repository_owner == 'Armbian' }}
     needs: Cancel
-    name: Purge older releases
+    name: "Purge older releases"
     runs-on: [ubuntu-latest]
     steps:
-    
-      - name: ver
-        run: |
-        
-          echo "${{ github.event.release.tag_name }}"
-    
+
+      - uses: dev-drprasad/delete-older-releases@v0.2.0
+        with:
+          keep_latest: 3           
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Purge old releases of trunk build
         uses: Vucko130/delete-older-releases@v0.2.2
         with:
           keep_latest: 2
-          delete_tag_pattern: trunk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
@@ -94,7 +46,7 @@ jobs:
         uses: igorjs/gh-actions-clean-workflow@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          days_old: 14
+          days_old: 10
 
   fake:
     if: ${{ github.repository_owner == 'Armbian' }}
@@ -199,7 +151,7 @@ jobs:
       branch: ''
       release: ''
       variant: ''
-      version: "${{ needs.fake.outputs.version }}"
+      version: "23.05.0.0010"
 
   jobsend:
 
