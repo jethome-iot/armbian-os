@@ -199,7 +199,7 @@ jobs:
       branch: ''
       release: ''
       variant: ''
-      version: "${{ needs.fake.outputs.version }}"
+      version: "23.05.0.0010"
 
   jobsend:
 
