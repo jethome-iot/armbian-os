@@ -24,7 +24,7 @@ jobs:
 
   prepare:
 
-    name: "Make JSON"
+    name: "JSON"
     if: ${{ github.repository_owner == 'armbian' }}
     runs-on: qemu
     outputs:
@@ -47,7 +47,7 @@ jobs:
           fetch-depth: 1
           path: os
 
-      - name: "Rsync"
+      - name: "Rsync userpatches"
         run: |
 
           rsync -av os/userpatches/. build/userpatches/
@@ -64,7 +64,7 @@ jobs:
           echo 'EOF' >> $GITHUB_OUTPUT
   Docker:
 
-    name: "B"
+    name: ">"
     needs: [ prepare ]
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -79,7 +79,7 @@ jobs:
       RUNNER_TAG:      "${{ matrix.runner_tag }}"
       OCI_TARGET_BASE: "ghcr.io/${{ github.repository }}/" # This is picked up by the Docker launcher automatically
       
-    runs-on: ubuntu-latest
+    runs-on: qemu
 
     steps:
 
