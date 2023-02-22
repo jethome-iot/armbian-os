@@ -71,15 +71,17 @@ jobs:
       - name: "Get latest release version"
         id: releases
         run: |
-          if [[ "${{ github.event.inputs.choice }}" != 'stable'  && "${{ github.event.inputs.choice }}" != 'rc' ]]; then
+          if [[ "${{ github.event.inputs.choice }}" != "stable"  && "${{ github.event.inputs.choice }}" != "rc" ]]; then
             runtype='nightly'
           else
             runtype="${{ github.event.inputs.choice }}"
+          fi
 
           version=$(echo "${{ github.ref }}" | awk -F"/" '{print $NF}' )
 
           if [[ ! -z "${{ github.event.inputs.sourcebranch }}" ]]; then
             version="${{ github.event.inputs.sourcebranch }}"
+          fi
 
 
           get_latest_release() {
