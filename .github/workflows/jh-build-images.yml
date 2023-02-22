@@ -1,0 +1,157 @@
+name: JetHome Build Nighly Images
+
+on:
+  push:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      choice:
+        type: choice
+        description: Build targets
+        options:
+        - beta
+        - stable
+        - rc
+        default: beta
+      board:
+        type: choice
+        description: Build for board
+        options:
+        - jethub
+        - jethubj100
+        - jethubj80
+        default: jethub
+      runner:
+        type: choice
+        description: Build runners for CLI
+        options:
+        - ubuntu-latest
+        - self-hosted
+        default: ubuntu-latest
+      sourcebranch:
+        description: Source branch
+        required: true
+        default: 'main'
+
+concurrency: buildimage-${{ github.ref }}
+
+jobs:
+  # In case we have a currently active build, cancel it
+  Prepare:
+    name: "Generate version"
+    if: ${{ github.repository_owner == 'jethome-iot' }}
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{steps.releases.outputs.version}}
+      runtype: ${{steps.releases.outputs.runtype}}
+      branch: ${{steps.releases.outputs.branch}}
+    steps:
+
+      - name: "Cancel active workflow"
+        if: false # temporaly disable cancel active build
+        uses: styfle/cancel-workflow-action@0.11.0
+        with:
+          all_but_latest: true
+          access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Purge old releases of trunk build"
+        uses: Vucko130/delete-older-releases@v0.2.2
+        with:
+          keep_latest: 1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Purge action workflow logs"
+        uses: igorjs/gh-actions-clean-workflow@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          days_old: 10
+
+      - name: "Get latest release version"
+        id: releases
+        run: |
+          if [[ "${{ github.event.inputs.choice }}" != "stable"  && "${{ github.event.inputs.choice }}" != "rc" ]]; then
+            runtype='nightly'
+          else
+            runtype="${{ github.event.inputs.choice }}"
+          fi
+
+          version=$(echo "${{ github.ref }}" | awk -F"/" '{print $NF}' )
+
+          if [[ ! -z "${{ github.event.inputs.sourcebranch }}" ]]; then
+            version="${{ github.event.inputs.sourcebranch }}"
+          fi
+
+
+          get_latest_release() {
+            curl --silent "https://api.github.com/repos/$1/releases/latest" |
+            grep '"tag_name":' |
+            sed -E 's/.*"([^"]+)".*/\1/'
+          }
+
+          VER=$(echo $(get_latest_release "jethome-iot/armbian-os") | rev | cut -d'.' -f 1 | rev | sed 's/^0*//')
+          PREFIX=$(echo $(curl https://raw.githubusercontent.com/jethome-iot/armbian-build/main-jethub/VERSION | sed "s/-trunk.*//"))
+          RELE=$(printf "%04d\n" $((VER+1)))
+          echo "runtype=$runtype" >> "$GITHUB_OUTPUT"
+          echo "branch=$version" >> "$GITHUB_OUTPUT"
+          echo "version=${PREFIX}.${RELE}" >> $GITHUB_OUTPUT
+          echo "version=${PREFIX}.${RELE}"
+          echo "runtype=$runtype"
+          echo "branch=$version"
+
+  generaterelease:
+
+    needs: [ Prepare ]
+    if: ${{ github.repository_owner == 'jethome-iot' }}
+    runs-on: ubuntu-latest
+    name: "Generate release"
+    outputs:
+      version: ${{steps.releases.outputs.version}}
+    steps:
+
+      - name: "Get latest release version"
+        id: releases
+        run: |
+
+          echo "version=${{ needs.Prepare.outputs.version }}" >> $GITHUB_OUTPUT
+          echo "runtype=${{ needs.Prepare.outputs.runtype }}" >> $GITHUB_OUTPUT
+          echo "branch=${{ needs.Prepare.outputs.branch }}" >> $GITHUB_OUTPUT
+
+      - run: |
+          echo "Env: ${{ github.event.inputs.choice }}"
+          echo "Env: ${{ github.event.inputs.runner }}"
+          echo "Env: ${{ github.event.inputs.sourcerepo }}"
+          echo "Runtype: ${{ needs.Prepare.outputs.runtype  }}"
+          echo "Branch: ${{ needs.Prepare.outputs.branch  }}"
+          echo "Version: ${{ needs.Prepare.outputs.version }}"
+
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - uses: ncipollo/release-action@v1
+        if: ${{ github.repository_owner == 'jethome-iot' && github.event.inputs.choice != 'stable'  && github.event.inputs.choice != 'rc' }}
+        with:
+          artifacts: "LICENSE"
+          tag: "${{ needs.Prepare.outputs.version }}"
+          name: "Armbian ${{ needs.Prepare.outputs.version }}"
+          bodyFile: ".github/Releases.md"
+          allowUpdates: true
+          removeArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  Build:
+
+    needs: generaterelease
+    if: ${{ success() && github.repository_owner == 'jethome-iot' }}
+    uses: ./.github/workflows/jh-include.yml
+
+    with:
+      runner: '${{ github.event.inputs.runner }}'
+      config: 'jethub.conf'
+      branch: '${{ needs.generaterelease.outputs.branch }}'
+      release: ''
+      buildtype: '${{ needs.generaterelease.outputs.runtype }}'
+      variant: '${{ github.event.inputs.board }}'
+      version: "${{ needs.generaterelease.outputs.version }}"
