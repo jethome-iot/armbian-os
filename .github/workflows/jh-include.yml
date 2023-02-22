@@ -6,7 +6,7 @@ on:
     inputs:
       runner:
        required: true
-       default: ubuntu-latest
+       default: 'ubuntu-latest'
        type: string
       config:
        required: true
