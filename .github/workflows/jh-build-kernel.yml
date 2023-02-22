@@ -1,0 +1,109 @@
+name: JH Make kernel cache
+
+on:
+  push:
+  schedule:
+    - cron: '0 */8 * * *' # Scheduled every 8 hours
+  workflow_dispatch:
+
+  workflow_call:
+    inputs:
+      config: 
+        type: string
+        required: true
+      tag:
+        type: string
+        required: true
+      release:
+        type: string
+        required: false
+        default: 'test'
+      version:
+        type: string
+        required: true
+    secrets:
+      token:
+        required: true
+      SSH_KEY:
+        required: true
+      SSH_KNOWNHOSTS_UPLOAD:
+        required: true
+
+jobs:
+  prepare:
+    name: "Make JSON"
+    if: ${{ github.repository_owner == 'jethome-iot' }}
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.json.outputs.JSON_CONTENT }}
+    steps:
+      - name: Checkout Armbian Framework
+        uses: actions/checkout@v3
+        with:
+          repository: jethome-iot/armbian-build
+          ref:  ${{ inputs.tag == null && 'main-jethub' || inputs.tag }}
+          fetch-depth: 1
+          clean: false # true is default. it *will* delete the hosts /dev if mounted inside.
+          path: build
+
+      - name: Checkout Armbian OS
+        uses: actions/checkout@v3
+        with:
+          repository: jethome-iot/armbian-os
+          ref:  main
+          fetch-depth: 1
+          clean: false # true is default. it *will* delete the hosts /dev if mounted inside.
+          path: os
+
+      - name: Build JSON
+        id: json
+        run: |
+          # Make a list of valid pairs from our config
+          echo 'JSON_CONTENT<<EOF' >> $GITHUB_OUTPUT
+          BRANCHES=$(cat os/targets/jethub*.conf |  grep -v "^$" | grep -v "^#" | sed -n 'p' | awk '{print $2}' | sort | uniq)
+          for BRANCH in ${BRANCHES}; do
+              FILES=$(cat os/targets/jethub*.conf | grep $BRANCH | grep -v "^$" | grep -v "^#" | sed -n 'p' | cut -d " " -f1 | uniq)
+              if [ -z "${FILES}" ]; then
+                continue
+              fi
+              LINUXVERSIONS=$(cat os/targets/jethub*.conf | grep $BRANCH | grep -v "^$" | grep -v "^#" | sed -n 'p' | awk '{print $3};' | sort | uniq | tr '\n' ' ' | sed 's/ /,/g')
+              while IFS= read -r line; do
+                BOARDFAMILY=$(cat build/config/boards/$line.* | grep BOARDFAMILY | cut -d'"' -f2)
+                BOARD=$line
+                source build/config/boards/$line.conf 2> /dev/null || true
+                source build/config/boards/$line.wip 2> /dev/null || true
+                source build/config/boards/$line.tvb 2> /dev/null || true
+                source build/config/sources/families/${BOARDFAMILY}.conf 2> /dev/null || true
+
+                # runner management. current set to "high" local runners
+                RUNNER=ubuntu-latest
+                [[ "${ARCH}" == arm64 ]] && RUNNER=aarch64
+                [[ "${BRANCH}" == current ]] && RUNNER=high
+                [[ "${BRANCH}" == edge ]] && RUNNER=high
+                [[ "${BRANCH}" == legacy ]] && RUNNER=high
+                RUNNER=self-hosted
+                echo "${LINUXFAMILY}:${BOARDFAMILY}:${BRANCH}:${line}:${RUNNER}:${LINUXVERSIONS}"
+              done <<< "$FILES"
+          done | sort | uniq | sort -u -t: -k1,3 | cut -d":" -f3,4,5,6 | sort | uniq | sed "s/:/ /g" | awk '{ printf "%s%s%s%s\n", "{\"board\":\""$2"\",", "\"branch\":\""$1"\",", "\"runner\":\""$3"\",", "\"linux\":\""$4"\"}" }' | jq -s >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+
+  Build:
+    if: ${{ success() && github.repository_owner == 'jethome-iot' }}
+    needs: [ prepare ]
+    strategy:
+      fail-fast: false # let other jobs try to complete if one fails
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    uses: ./.github/workflows/jh-include-kernel.yml
+    with:
+      branch: '${{ matrix.branch }}'
+      board: '${{ matrix.board }}'
+      runner: '${{ matrix.runner }}'
+      tag: ${{ inputs.tag == null && 'main-jethub' || inputs.tag }}
+      distro: '${{ matrix.linux }}'
+      release: 'test'
+      version: 'nightly'
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+      SSH_KEY: ${{ secrets.SSH_KEY }}}
+      SSH_KNOWNHOSTS_UPLOAD: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD}}

@@ -1,0 +1,104 @@
+name: JH Reusable build&upload kernel cache
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        type: string
+        required: true
+        description: legacy, current, edge etc
+      board:
+        type: string
+        required: true
+        description: base board for kernel build
+      runner:
+        type: string
+        required: true
+        default: ubuntu-latest
+      tag:
+        type: string
+        required: false
+        description: tag to checkout from armbian-build
+      release:
+        type: string
+        required: false
+        default: test
+        description: release type stable, nightly, test
+      version:
+        type: string
+        required: false
+        description: version of armbian-build (nightly or version number)
+      distro:
+        type: string
+        required: false
+        default: jammy
+        description: distros to build for
+    secrets:
+      token:
+        required: true
+      SSH_KEY:
+        required: true
+      SSH_KNOWNHOSTS_UPLOAD:
+        required: true
+
+
+
+jobs:
+  kernel:
+    if: ${{ github.repository_owner == 'jethome-iot' }}
+
+    runs-on: "${{ inputs.runner }}"
+
+    name: "${{ inputs.board }} ${{ inputs.branch }} ${{ inputs.runner }}"
+    env:
+      BRANCH: "${{ inputs.branch }}"
+      BOARD: "${{ inputs.board }}"
+      OCI_TARGET_BASE: "ghcr.io/${{ github.repository }}/" # This is picked up by the Docker launcher automatically
+    steps:
+
+      # Login to ghcr.io, for later uploading rootfs to ghcr.io
+      - name: Docker Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }} # GitHub username or org
+          password: ${{ secrets.token == null && secrets.GITHUB_TOKEN || secrets.token }}    # GitHub actions builtin token. repo has to have pkg access.
+ 
+      - name: Checkout build repo at ${{ inputs.tag == null && 'main-jethub' || inputs.tag }}
+        uses: actions/checkout@v3 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
+        with:
+          repository: jethome-iot/armbian-build
+          ref: ${{ inputs.tag == null && 'main-jethub' || inputs.tag }}
+          fetch-depth: 1
+          clean: false # true is default. it *will* delete the hosts /dev if mounted inside.
+
+      - name: B Kernel ${{env.BOARD}}:${{env.BRANCH}}
+        id: kernel
+        run: |
+          # BRANCH and BOARD are in the env, but Docker doesn't know that; (sudo has --preserve-env). So we need to pass them as args.
+          # SHARE_LOG=yes to share logs to pastebin
+          VER="${{ inputs.version == null && 'nightly' || inputs.version }}"
+          if [ ${VER} == "nightly" ]; then
+            VER=$(cat VERSION)
+          fi
+          mkdir -p userpatches
+          echo ${VER} > userpatches/VERSION
+          # Need to check and fix version
+          sudo rm -rf output/debs/* || true
+          bash ./compile.sh kernel "BRANCH=${{env.BRANCH}}" "BOARD=${{env.BOARD}}" SHARE_LOG=no CLEAN_LEVEL="alldebs" ARTIFACT_IGNORE_CACHE=yes FORCE_ARTIFACTS_DOWNLOAD="yes"
+          ls -l output/debs/
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo $(ls output/debs/linux-*.deb | tr '\n' ' ') >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          du output
+
+      - name: Deploy to server
+        uses: jethome-iot/actions/repo-upload@master
+        with:
+          path: '.'
+          files: ${{ steps.kernel.outputs.files }}
+          hostpath: '/home/repo/armbian'
+          branch: ${{ inputs.release }}
+          distro: ${{ inputs.distro }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_KNOWNHOSTS_UPLOAD: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD }}
