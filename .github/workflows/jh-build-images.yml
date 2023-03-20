@@ -1,5 +1,4 @@
 name: JetHome Build Nighly Images
-#
 
 on:
   push:
@@ -92,7 +91,7 @@ jobs:
           }
 
           VER=$(echo $(get_latest_release "jethome-iot/armbian-os") | rev | cut -d'.' -f 1 | rev | sed 's/^0*//')
-          PREFIX=$(echo $(curl https://raw.githubusercontent.com/jethome-iot/armbian-build/main/VERSION | sed "s/-trunk.*//"))
+          PREFIX=$(echo $(curl https://raw.githubusercontent.com/jethome-iot/armbian-build/main-jethub/VERSION | sed "s/-trunk.*//"))
           RELE=$(printf "%04d\n" $((VER+1)))
           echo "runtype=$runtype" >> "$GITHUB_OUTPUT"
           echo "branch=$version" >> "$GITHUB_OUTPUT"
@@ -150,7 +149,7 @@ jobs:
 
     with:
       runner: '${{ github.event.inputs.runner }}'
-      config: 'nighly-cli-jh.conf'
+      config: 'jethub.conf'
       branch: '${{ needs.generaterelease.outputs.branch }}'
       release: ''
       buildtype: '${{ needs.generaterelease.outputs.runtype }}'
