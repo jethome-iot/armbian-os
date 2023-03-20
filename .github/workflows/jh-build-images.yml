@@ -35,8 +35,9 @@ on:
         required: true
         default: 'main'
 
-jobs:
+concurrency: buildimage-${{ github.ref }}
 
+jobs:
   # In case we have a currently active build, cancel it
   Prepare:
     name: "Generate version"
