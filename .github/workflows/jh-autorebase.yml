@@ -9,9 +9,11 @@ on:
         required: true
   workflow_dispatch:
 
+concurrency: armbian-build-rebase
+
 jobs:
-  dorebase:
-    name: Rebasing repository
+  doupdate:
+    name: Sync repository with upstream
     runs-on: ubuntu-latest
     if: ${{ github.repository_owner == 'jethome-iot' }}
     permissions:
@@ -52,3 +54,42 @@ jobs:
           fi;
           git remote remove upstream || true
 
+  dorebase:
+    name: Rebase repository
+    needs: doupdate
+    runs-on: ubuntu-latest
+    if: ${{ github.repository_owner == 'jethome-iot' }}
+    permissions:
+      contents: write
+      packages: write
+
+    strategy:
+      matrix: 
+        branch: [main]
+    steps:
+      - name: Clean git
+        run: |
+          mkdir -p rebase
+          cd rebase
+          git remote remove upstream || true
+      - name: Checkout armbian repository (${{ matrix.branch }})
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          repository: jethome-iot/armbian-build
+          path: rebase
+          ref: ${{ matrix.branch }}-jethub
+          token: ${{ secrets.token == null && secrets.JETHOME_TOKEN || secrets.token }}
+
+      - name: Rebase armbian repository (${{ matrix.branch }})
+        run: |
+          cd rebase
+          git pull --all
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name  "GitHub Actions"
+          git rebase origin/${{ matrix.branch }}
+          if [ "$(git status | grep diverged)" ]; then
+            git push origin $(git branch --show-current) --force-with-lease;
+          else
+            git push origin $(git branch --show-current)
+          fi;
