@@ -25,7 +25,7 @@ on:
         default: 'main-jethub'
 
 
-concurrency: buildimage-${{ github.ref }}
+concurrency: jh-ci-${{ github.ref }}
 
 jobs:
 
