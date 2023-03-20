@@ -4,11 +4,6 @@ on:
   schedule:
     - cron: '0 */8 * * *' # Scheduled every 8 hours
   workflow_dispatch:
-  workflow_call:
-      branch:
-        required: false
-        type: string
-        default: main
 
 jobs:
   prepare:
