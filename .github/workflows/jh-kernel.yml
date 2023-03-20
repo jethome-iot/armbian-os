@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 */8 * * *' # Scheduled every 8 hours
   workflow_dispatch:
+  workflow_call:
+      branch:
+        required: false
+        type: string
+        default: main
 
 jobs:
   prepare:
@@ -23,7 +28,7 @@ jobs:
           path: build
 
       - name: Checkout Armbian OS
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3.3
         with:
           repository: jeethome-iot/armbian-os
           ref:  main
@@ -36,25 +41,31 @@ jobs:
         run: |
           # Make a list of valid pairs from our config
           echo 'JSON_CONTENT<<EOF' >> $GITHUB_OUTPUT
-          for BRANCH in legacy current midstream edge; do
-              FILES=$(cat os/targets/jethub*.conf | grep $BRANCH | grep -v "^$" | grep -v "^#" | sed -n $LINE'p' | cut -d " " -f1 | uniq)
+          for BRANCH in legacy current edge; do
+              FILES=$(cat os/targets/jethub*.conf | grep $BRANCH | grep -v "^$" | grep -v "^#" | sed -n 'p' | cut -d " " -f1 | uniq)
+              if [ -z "${FILES}" ]; then
+                continue
+              fi
+              LINUXVERSIONS=$(cat os/targets/jethub*.conf | grep $BRANCH | grep -v "^$" | grep -v "^#" | sed -n 'p' | awk '{print $3};' | sort | uniq | tr '\n' ' ')
               while IFS= read -r line; do
-              BOARDFAMILY=$(cat build/config/boards/$line.* | grep BOARDFAMILY | cut -d'"' -f2)
-              BOARD=$line
-              source build/config/boards/$line.conf 2> /dev/null || true
-              source build/config/boards/$line.wip 2> /dev/null || true
-              source build/config/boards/$line.tvb 2> /dev/null || true
-              source build/config/sources/families/${BOARDFAMILY}.conf 2> /dev/null || true
+                BOARDFAMILY=$(cat build/config/boards/$line.* | grep BOARDFAMILY | cut -d'"' -f2)
+                BOARD=$line
+                source build/config/boards/$line.conf 2> /dev/null || true
+                source build/config/boards/$line.wip 2> /dev/null || true
+                source build/config/boards/$line.tvb 2> /dev/null || true
+                source build/config/sources/families/${BOARDFAMILY}.conf 2> /dev/null || true
 
-              # runner management
-              RUNNER=ubuntu-latest
-              [[ "${ARCH}" == arm64 ]] && RUNNER=aarch64
-              [[ "${BRANCH}" == current ]] && RUNNER=alfa
-              [[ "${BRANCH}" == edge ]] && RUNNER=beta              
-              echo "${LINUXFAMILY}:${BOARDFAMILY}:${BRANCH}:${line}:${RUNNER}"
+                # runner management. current set to "high" local runners
+                RUNNER=ubuntu-latest
+                [[ "${ARCH}" == arm64 ]] && RUNNER=aarch64
+                [[ "${BRANCH}" == current ]] && RUNNER=high
+                [[ "${BRANCH}" == edge ]] && RUNNER=high
+                [[ "${BRANCH}" == legacy ]] && RUNNER=high
+                echo "${LINUXFAMILY}:${BOARDFAMILY}:${BRANCH}:${line}:${RUNNER}:${LINUXVERSIONS}"
               done <<< "$FILES"
-          done | sort | uniq | sort -u -t: -k1,3 | cut -d":" -f3,4,5 | sort | uniq | sed "s/:/ /g" | awk '{ printf "%s%s%s\n", "{\"board\":\""$2"\",", "\"branch\":\""$1"\",", "\"runner\":\""$3"\"}" }' | jq -s >> $GITHUB_OUTPUT
+          done | sort | uniq | sort -u -t: -k1,3 | cut -d":" -f3,4,5,6 | sort | uniq | sed "s/:/ /g" | awk '{ printf "%s%s%s%s\n", "{\"board\":\""$2"\",", "\"branch\":\""$1"\",", "\"runner\":\""$3"\",", "\"linux\":\""$4"\"}" }' | jq -s >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
+
   kernel:
     if: ${{ github.repository_owner == 'armbian' }}
     needs: [ prepare ]
@@ -79,12 +90,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }} # GitHub username or org
           password: ${{ secrets.GITHUB_TOKEN }}    # GitHub actions builtin token. repo has to have pkg access.
-
+ 
       - name: Checkout build repo
         uses: actions/checkout@v3 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
         with:
-          repository: armbian/build #${{ github.repository_owner }}/armbian-build
-          ref: force_download
+          repository: jehome-iot/armbian-build
+          ref: main-jethub
           fetch-depth: 1
           clean: false # true is default. it *will* delete the hosts /dev if mounted inside.
 
@@ -97,21 +108,17 @@ jobs:
           bash ./compile.sh kernel "BRANCH=${{env.BRANCH}}" "BOARD=${{env.BOARD}}" SHARE_LOG=yes CLEAN_LEVEL="alldebs" FORCE_ARTIFACTS_DOWNLOAD="yes"
           ls -l output/debs/
           du output
-          
-      - name: "Generate key id" # We need this in case we run multiple runners on one machine
-        run: echo "RANDOM=ID_$((RANDOM%1000000))" >> $GITHUB_ENV
-        shell: bash
-
-      - name: Install SSH key for storage
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.KEY_TORRENTS }}
-          name: ${{ env.RANDOM }}
-          known_hosts: ${{ secrets.KNOWN_HOSTS_UPLOAD }}
-          if_key_exists: replace
 
       - name: Deploy to server
-        if: ${{ github.repository_owner == 'Armbian' }}
+        if: 0
+        uses: jethome-iot/actions/repo-upload@master
+        with:
+          key: ${{ secrets.SSH_KEY }}
+          known_hosts: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD }}
+          distro: ${{ matrix.linux }}
+
+      - name test
+        if: 0
         run: |
           if ! command -v "lftp" > /dev/null 2>&1; then
              sudo apt-get -y -qq install lftp
