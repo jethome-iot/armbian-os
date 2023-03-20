@@ -66,7 +66,7 @@ jobs:
             curl --silent "https://api.github.com/repos/$1/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
           }
 
-          VER=$(echo $(get_latest_release "jethome-iot/armbian/os") | rev | cut -d'.' -f 1 | rev | sed 's/^0*//')
+          VER=$(echo $(get_latest_release "jethome-iot/armbian-os") | rev | cut -d'.' -f 1 | rev | sed 's/^0*//')
           PREFIX=$(echo $(curl https://raw.githubusercontent.com/jethome-iot/armbian-build/main-jethub/VERSION | sed "s/-trunk.*//"))
           RELE=$(printf "%04d\n" $((VER+1)))
           echo "version=${PREFIX}.${RELE}" >> $GITHUB_OUTPUT
