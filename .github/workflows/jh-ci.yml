@@ -63,9 +63,7 @@ jobs:
         run: |
 
           get_latest_release() {
-            curl --silent "https://api.github.com/repos/$1/releases/latest" |
-            grep '"tag_name":' |
-            sed -E 's/.*"([^"]+)".*/\1/'
+            curl --silent "https://api.github.com/repos/$1/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
           }
 
           VER=$(echo $(get_latest_release "jethome-iot/armbian/os") | rev | cut -d'.' -f 1 | rev | sed 's/^0*//')
@@ -74,7 +72,7 @@ jobs:
           echo "version=${PREFIX}.${RELE}" >> $GITHUB_OUTPUT
           [[ -n "${{ inputs.version }}" ]] && echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT || true
           echo "version=${PREFIX}.${RELE}"
-          [[ -n "${{ inputs.version }}" ]] && echo "version=${{ inputs.version }}"
+          [[ -n "${{ inputs.version }}" ]] && echo "version=${{ inputs.version }}" || true
 
   generaterelease:
 
@@ -105,7 +103,7 @@ jobs:
         if: ${{ github.repository_owner == 'jethome-iot' && github.event.inputs.choice != 'stable'  && github.event.inputs.choice != 'rc' }}
         with:
           artifacts: "LICENSE"
-          commit: {{ github.event.inputs.branch }} | {{ github.sha }}
+          commit: "${{ inputs.branch == null && github.sha || inputs.buildbranch }}"
           tag: "${{ needs.Prepare.outputs.version }}"
           name: "Armbian ${{ needs.Prepare.outputs.version }}"
           bodyFile: ".github/Releases.md"
