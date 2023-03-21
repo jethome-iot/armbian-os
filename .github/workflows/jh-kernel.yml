@@ -120,13 +120,15 @@ jobs:
           sudo rm -rf output/debs/* || true
           bash ./compile.sh kernel "BRANCH=${{env.BRANCH}}" "BOARD=${{env.BOARD}}" SHARE_LOG=no CLEAN_LEVEL="alldebs" FORCE_ARTIFACTS_DOWNLOAD="yes"
           ls -l output/debs/
-          echo "files=$(ls output/debs/linux-*.deb)" >> $GITHUB_OUTPUT
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          ls output/debs/linux-*.deb >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           du output
 
       - name: Deploy to server
         uses: jethome-iot/actions/repo-upload@master
         with:
-          path: 'output/debs'
+          path: '.'
           files: ${{ steps.kernel.outputs.files }}
           hostpath: '/home/repo/armbian'
           ssh_key: ${{ secrets.SSH_KEY }}
