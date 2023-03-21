@@ -130,7 +130,7 @@ jobs:
           bash ./compile.sh kernel "BRANCH=${{env.BRANCH}}" "BOARD=${{env.BOARD}}" SHARE_LOG=no CLEAN_LEVEL="alldebs" ARTIFACT_IGNORE_CACHE=yes FORCE_ARTIFACTS_DOWNLOAD="yes"
           ls -l output/debs/
           echo "files<<EOF" >> $GITHUB_OUTPUT
-          ls output/debs/linux-*.deb >> $GITHUB_OUTPUT
+          echo $(ls output/debs/linux-*.deb | tr '\n' ' ') >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
           du output
 
