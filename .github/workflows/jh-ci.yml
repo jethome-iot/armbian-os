@@ -95,7 +95,7 @@ jobs:
         run: |
 
           echo "version=${{ needs.Prepare.outputs.version }}" >> $GITHUB_OUTPUT
-          echo "tag=${{ inputs.branch == null && github.sha || inputs.buildbranch }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ inputs.branch == null && main-jethub || inputs.branch }}" >> $GITHUB_OUTPUT
 
       - run: |
           echo "Release: ${{ github.event.inputs.release }}"
@@ -123,10 +123,9 @@ jobs:
     if: ${{ success() && github.repository_owner == 'jethome-iot' }}
     uses: ./.github/workflows/jh-kernel.yml
     with:
-      config: "${{ github.event.inputs.config || 'jethub.conf' }}"
+      config: "${{ github.event.inputs.config == null && 'jethub.conf' || github.event.inputs.config }}"
       tag: '${{ needs.generaterelease.outputs.tag }}'
-      release: "${{ github.event.inputs.release || 'nightly' }}"
+      release: "${{ github.event.inputs.release == null && 'nightly' || github.event.inputs.release }}"
       version: "${{ needs.generaterelease.outputs.version }}"
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
-
