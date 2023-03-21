@@ -95,7 +95,7 @@ jobs:
         run: |
 
           echo "version=${{ needs.Prepare.outputs.version }}" >> $GITHUB_OUTPUT
-          echo "tag=${{ inputs.branch == null && main-jethub || inputs.branch }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ inputs.branch == null && 'main-jethub' || inputs.branch }}" >> $GITHUB_OUTPUT
 
       - run: |
           echo "Release: ${{ github.event.inputs.release }}"
