@@ -4,7 +4,24 @@ on:
   push:
   schedule:
     - cron: '0 */8 * * *' # Scheduled every 8 hours
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      config: 
+        type: string
+        required: true
+      tag:
+        type: string
+        required: true
+      release:
+        type: string
+        required: false
+        default: 'nightly'
+      version:
+        type: string
+        required: true
+    secrets:
+      token:
+        required: true
 
 jobs:
   prepare:
@@ -103,14 +120,18 @@ jobs:
           sudo rm -rf output/debs/* || true
           bash ./compile.sh kernel "BRANCH=${{env.BRANCH}}" "BOARD=${{env.BOARD}}" SHARE_LOG=no CLEAN_LEVEL="alldebs" FORCE_ARTIFACTS_DOWNLOAD="yes"
           ls -l output/debs/
+          echo "files=$(ls output/debs/linux-*.deb)" >> $GITHUB_OUTPUT
           du output
 
       - name: Deploy to server
-        if: 0
         uses: jethome-iot/actions/repo-upload@master
         with:
-          key: ${{ secrets.SSH_KEY }}
-          known_hosts: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD }}
+          path: 'output/debs'
+          files: ${{ steps.kernel.outputs.files }}
+          hostpath: '/home/repo/armbian'
+          ssh_key: ${{ secrets.SSH_KEY }}
+          ssh_knownhosts: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD }}
+          branch: ${{ inputs.release }}
           distro: ${{ matrix.linux }}
 
       - name: test

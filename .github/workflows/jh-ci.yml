@@ -12,6 +12,7 @@ on:
         options:
         - nightly
         - stable
+        - test
       board:
         description: 'Board'
         required: false
@@ -86,6 +87,7 @@ jobs:
     name: "Generate ${{ inputs.release }} release"
     outputs:
       version: ${{steps.releases.outputs.version}}
+      tag: ${{steps.releases.outputs.tag}}
     steps:
 
       - name: "Get latest release version"
@@ -93,6 +95,7 @@ jobs:
         run: |
 
           echo "version=${{ needs.Prepare.outputs.version }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ inputs.branch == null && github.sha || inputs.buildbranch }}" >> $GITHUB_OUTPUT
 
       - run: |
           echo "Release: ${{ github.event.inputs.release }}"
@@ -114,3 +117,34 @@ jobs:
           allowUpdates: true
           removeArtifacts: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  buildkernel:
+    needs: generaterelease
+    if: ${{ success() && github.repository_owner == 'jethome-iot' }}
+    uses: ./.github/workflows/jh-kernel.yml
+    with:
+      config: "${{ github.event.inputs.config || 'jethub.conf' }}"
+      tag: '${{ needs.generaterelease.outputs.tag }}'
+      release: "${{ github.event.inputs.release || 'nightly' }}"
+      version: "${{ needs.generaterelease.outputs.version }}"
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+
+  buildimage:
+    needs: [ generaterelease buildkernel ]
+    if: ${{ success() && github.repository_owner == 'jethome-iot' }}
+    uses: ./.github/workflows/jh-image.yml
+
+    with:
+      config: "${{ github.event.inputs.config || 'jethub.conf' }}"
+      branch: ''
+      tag: '${{ needs.generaterelease.outputs.tag }}'
+      release: "${{ github.event.inputs.release || 'nightly' }}"
+      board: '${{ github.event.inputs.board }}'
+      variant: ''
+      version: "${{ needs.generaterelease.outputs.version }}"
+    secrets:
+      SSH_KEY: ${{ secrets.KEY_TORRENTS }}
+      KNOWN_HOSTS: ${{ secrets.KNOWN_HOSTS_UPLOAD }}
+      GPG_KEY1: ${{ secrets.GPG_KEY1 }}
+      GPG_PASSPHRASE1: ${{ secrets.GPG_PASSPHRASE1 }}
