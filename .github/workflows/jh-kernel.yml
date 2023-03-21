@@ -63,7 +63,7 @@ jobs:
               if [ -z "${FILES}" ]; then
                 continue
               fi
-              LINUXVERSIONS=$(cat os/targets/jethub*.conf | grep $BRANCH | grep -v "^$" | grep -v "^#" | sed -n 'p' | awk '{print $3};' | sort | uniq | tr '\n' ' ')
+              LINUXVERSIONS=$(cat os/targets/jethub*.conf | grep $BRANCH | grep -v "^$" | grep -v "^#" | sed -n 'p' | awk '{print $3};' | sort | uniq | tr '\n' ' ' | sed 's/ $/,/g')
               while IFS= read -r line; do
                 BOARDFAMILY=$(cat build/config/boards/$line.* | grep BOARDFAMILY | cut -d'"' -f2)
                 BOARD=$line
