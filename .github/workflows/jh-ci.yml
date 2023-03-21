@@ -130,21 +130,3 @@ jobs:
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
 
-  buildimage:
-    needs: [ generaterelease buildkernel ]
-    if: ${{ success() && github.repository_owner == 'jethome-iot' }}
-    uses: ./.github/workflows/jh-image.yml
-
-    with:
-      config: "${{ github.event.inputs.config || 'jethub.conf' }}"
-      branch: ''
-      tag: '${{ needs.generaterelease.outputs.tag }}'
-      release: "${{ github.event.inputs.release || 'nightly' }}"
-      board: '${{ github.event.inputs.board }}'
-      variant: ''
-      version: "${{ needs.generaterelease.outputs.version }}"
-    secrets:
-      SSH_KEY: ${{ secrets.KEY_TORRENTS }}
-      KNOWN_HOSTS: ${{ secrets.KNOWN_HOSTS_UPLOAD }}
-      GPG_KEY1: ${{ secrets.GPG_KEY1 }}
-      GPG_PASSPHRASE1: ${{ secrets.GPG_PASSPHRASE1 }}
