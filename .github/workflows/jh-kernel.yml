@@ -142,6 +142,11 @@ jobs:
           name: ${{ env.RANDOM }}
           known_hosts: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD }}
           if_key_exists: replace
+          config: |
+            Host bastion
+              HostName repo.jethome.ru
+              User repo
+              IdentityFile ~/.ssh/${{ env.RANDOM }}
 
       - name: Deploy to server
         uses: jethome-iot/actions/repo-upload@master
