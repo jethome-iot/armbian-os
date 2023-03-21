@@ -22,6 +22,10 @@ on:
     secrets:
       token:
         required: true
+      SSH_KEY:
+        required: true
+      SSH_KNOWNHOSTS_UPLOAD:
+        required: true
 
 jobs:
   prepare:

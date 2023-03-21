@@ -128,4 +128,6 @@ jobs:
       release: "${{ github.event.inputs.release == null && 'nightly' || github.event.inputs.release }}"
       version: "${{ needs.generaterelease.outputs.version }}"
     secrets:
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+      SSH_KNOWNHOSTS_UPLOAD: ${{ secrets.KNOWN_HOSTS_UPLOAD }}
       token: ${{ secrets.GITHUB_TOKEN }}
