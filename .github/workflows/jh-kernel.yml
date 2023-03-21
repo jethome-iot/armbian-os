@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: jethome-iot/armbian-build
-          ref:  ${{ github.event.inputs.tag == null && 'main-jethub' || github.event.inputs.tag }}
+          ref:  ${{ inputs.tag == null && 'main-jethub' || inputs.tag }}
           fetch-depth: 1
           clean: false # true is default. it *will* delete the hosts /dev if mounted inside.
           path: build
@@ -108,7 +108,7 @@ jobs:
         uses: actions/checkout@v3 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
         with:
           repository: jethome-iot/armbian-build
-          ref: main-jethub
+          ref: ${{ inputs.tag == null && 'main-jethub' || inputs.tag }}
           fetch-depth: 1
           clean: false # true is default. it *will* delete the hosts /dev if mounted inside.
 
@@ -117,9 +117,9 @@ jobs:
         run: |
           # BRANCH and BOARD are in the env, but Docker doesn't know that; (sudo has --preserve-env). So we need to pass them as args.
           # SHARE_LOG=yes to share logs to pastebin
-          VER="${{ github.event.inputs.version == null && 'nightly' || github.event.inputs.version }}"
+          VER="${{ inputs.version == null && 'nightly' || inputs.version }}"
           if [ ${VER} == "nightly" ]; then
-            VER=cat VERSION
+            VER=$(cat VERSION)
           fi
           echo ${VER} > userpatches/VERSION
           sudo rm -rf output/debs/* || true
