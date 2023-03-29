@@ -131,3 +131,20 @@ jobs:
       SSH_KEY: ${{ secrets.SSH_KEY }}
       SSH_KNOWNHOSTS_UPLOAD: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD }}
       token: ${{ secrets.GITHUB_TOKEN }}
+
+  buildimage:
+    needs: [ generaterelease buildkernel ]
+    if: ${{ success() && github.repository_owner == 'jethome-iot' }}
+    uses: ./.github/workflows/jh-image.yml
+
+    with:
+      config: "${{ github.event.inputs.config == null && 'jethub.conf' || github.event.inputs.config }}"
+      branch: ''
+      tag: '${{ needs.generaterelease.outputs.tag }}'
+      release: "${{ github.event.inputs.release == null && 'nightly' || github.event.inputs.release }}"
+      board: '${{ github.event.inputs.board }}'
+      variant: ''
+      version: "${{ needs.generaterelease.outputs.version }}"
+    secrets:
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+      SSH_KNOWNHOSTS_UPLOAD: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD }}
