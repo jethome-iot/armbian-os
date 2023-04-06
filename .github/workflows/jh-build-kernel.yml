@@ -99,6 +99,7 @@ jobs:
       board: '${{ matrix.board }}'
       runner: '${{ matrix.runner }}'
       tag: ${{ inputs.tag == null && 'main-jethub' || inputs.tag }}
+      distro: '${{ matrix.linux }}'
       release: 'test'
       version: 'nightly'
     secrets:
