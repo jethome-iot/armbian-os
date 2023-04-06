@@ -48,7 +48,7 @@ jobs:
     if: ${{ github.repository_owner == 'jethome-iot' }}
 
     runs-on: "${{ inputs.runner }}"
-    
+
     name: "${{ inputs.board }} ${{ inputs.branch }} ${{ inputs.runner }}"
     env:
       BRANCH: "${{ inputs.branch }}"
@@ -81,6 +81,7 @@ jobs:
           if [ ${VER} == "nightly" ]; then
             VER=$(cat VERSION)
           fi
+          mkdir -p userpatches
           echo ${VER} > userpatches/VERSION
           # Need to check and fix version
           sudo rm -rf output/debs/* || true
