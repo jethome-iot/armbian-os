@@ -28,6 +28,11 @@ on:
         type: string
         required: false
         description: version of armbian-build (nightly or version number)
+      distro:
+        type: string
+        required: false
+        default: jammy
+        description: distros to build for
     secrets:
       token:
         required: true
@@ -93,6 +98,6 @@ jobs:
           files: ${{ steps.kernel.outputs.files }}
           hostpath: '/home/repo/armbian'
           branch: ${{ inputs.release }}
-          distro: ${{ matrix.linux }}
+          distro: ${{ inputs.distro }}
           SSH_KEY: ${{ secrets.SSH_KEY }}
           SSH_KNOWNHOSTS_UPLOAD: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD }}
