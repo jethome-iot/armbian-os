@@ -219,36 +219,6 @@ jobs:
       images-chunk-not-empty-1: ${{ steps.prepare-matrix.outputs.images-chunk-not-empty-1 }}
       images-chunk-size-1: ${{ steps.prepare-matrix.outputs.images-chunk-size-1 }}
 
-# template file: 250.single_aggr-jobs.yaml
-
-  # ------ aggregate all artifact chunks into a single dependency -------
-
-  all-artifacts-ready:
-    name: "artifacts chunks ready"
-    runs-on: ubuntu-latest # not going to run, anyway, but is required.
-    if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
-    needs: [ "matrix_prep", "build-artifacts-chunk-1" ] # <-- HERE: all artifact chunk numbers.
-    steps:
-      - name: fake step
-        run: uptime
-
-  all-images-ready:
-    name: "image chunks ready"
-    runs-on: ubuntu-latest # not going to run, anyway, but is required.
-    if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
-    needs: [ "matrix_prep", "build-images-chunk-1" ] # <-- HERE: all image chunk numbers.
-    steps:
-      - name: fake step
-        run: uptime
-
-  all-artifacts-and-images-ready:
-    name: "artifacts and 16 image chunks ready"
-    runs-on: ubuntu-latest # not going to run, anyway, but is required.
-    if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
-    needs: [ "matrix_prep", "all-artifacts-ready", "all-images-ready" ]
-    steps:
-      - name: fake step
-        run: uptime
 
 # template file: 550.per-chunk-artifacts_job.yaml
 
