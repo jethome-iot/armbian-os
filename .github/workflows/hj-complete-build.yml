@@ -66,7 +66,7 @@ jobs:
           skip-commit: 'false'
           skip-ci: 'false'
           version-file: "${{ github.event.inputs.release || 'nightly' }}-jethome.json"
-          pre-release: "true"
+          pre-release: "false"
           git-branch: 'main'
           tag-prefix: ''
           pre-release-identifier: 'trunk'
