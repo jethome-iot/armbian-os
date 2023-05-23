@@ -58,8 +58,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           git-message: 'Bump release to {version}'
-          git-user-name: armbianworker
-          git-user-email: info@armbian.com
+          git-user-name: jethome-bot
+          git-user-email: dev@jethome.ru
           output-file: 'false'
           skip-version-file: 'false'
           skip-on-empty: 'false'
