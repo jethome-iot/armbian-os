@@ -1,0 +1,26 @@
+{
+  "name": "Armbian OS Additional version",
+  "version": "0",
+  "description": "Linux for ARM development boards",
+  "keywords": [
+    "ARM",
+    "Linux",
+    "Debian",
+    "Ubuntu",
+    "Arch",
+    "Yocto"
+  ],
+  "homepage": "https://www.armbian.com",
+  "bugs": {
+    "url": "https://www.armbian.com/bugs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jethome-iot/armbian-build"
+  },
+  "license": "GPL2",
+  "author": {
+    "name": "Igor Pecovnik",
+    "email": "info@armbian.com"
+  }
+}
