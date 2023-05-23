@@ -96,8 +96,8 @@ jobs:
       - uses: ncipollo/release-action@v1
         if: ${{ github.repository_owner == 'jethome-iot' && github.event.inputs.versionOverride == '' }}
         with:
-          tag: ${{ steps.changelog.outputs.tag }}
-          name: "${{ steps.changelog.outputs.tag }}"
+          tag: ${{ steps.changeversion.outputs.tag }}
+          name: "${{ steps.changeversion.outputs.tag }}"
           bodyFile: "body.html"
           prerelease: "true"
           allowUpdates: true
@@ -107,8 +107,8 @@ jobs:
       - name: Save
         id: releases
         run: |
-          echo "Version: ${{ steps.changelog.outputs.tag }}${{ github.event.inputs.versionOverride }}"
-          echo "version=${{ steps.changelog.outputs.tag }}${{ github.event.inputs.versionOverride }}" >> $GITHUB_OUTPUT
+          echo "Version: ${{ steps.changeversion.outputs.tag }}${{ github.event.inputs.versionOverride }}"
+          echo "version=${{ steps.changeversion.outputs.tag }}${{ github.event.inputs.versionOverride }}" >> $GITHUB_OUTPUT
 
     outputs:
 
