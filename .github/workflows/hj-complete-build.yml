@@ -7,7 +7,7 @@ on:
     inputs:
       release:
         description: 'Release stable/nightly, if no nightly build'
-        options: [ 'nighly', 'stable' ]
+        options: [ 'nightly', 'stable' ]
         type: choice
         default: 'nightly'
       versionOverride:
@@ -76,9 +76,9 @@ jobs:
         id: changelog
         run: |
           # Get full version tag
-          version-file="${{ github.event.inputs.release || 'nightly' }}.json"
-          version-file-jethome="${{ github.event.inputs.release || 'nightly' }}-jethome.json"
-          echo "version=$(cat ${version-file} | jq .version)-jethome.$(cat ${version-file-jethome} | jq .version)" >> $GITHUB_OUTPUT
+          versionfile="${{ github.event.inputs.release || 'nightly' }}.json"
+          versionfilejethome="${{ github.event.inputs.release || 'nightly' }}-jethome.json"
+          echo "version=$(cat ${versionfile} | jq .version)-jethome.$(cat ${versionfilejethome} | jq .version)" >> $GITHUB_OUTPUT
 
       - name: "Generate body file"
         run: |
