@@ -386,7 +386,7 @@ jobs:
   "build-images-chunk-1": # templated "build-images-chunk-1"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 90
-    if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'armbian' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-1 == 'yes' ) }} # <-- HERE: Chunk number.
+    if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-1 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
       matrix: ${{ fromJSON(needs.matrix_prep.outputs.images-chunk-json-1) }} # <-- HERE: Chunk number.
@@ -503,7 +503,7 @@ jobs:
           echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img.xz
 
       - name: "Upload artefacts"
-        #if: ${{ github.repository_owner == 'Armbian' && github.event.inputs.release != 'stable' }}
+        #if: ${{ github.repository_owner == 'jethome-iot' && github.event.inputs.release != 'stable' }}
         if: ${{ inputs.release != 'stable' }}
         uses: ncipollo/release-action@v1
         with:
