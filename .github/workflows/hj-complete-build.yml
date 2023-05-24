@@ -155,7 +155,7 @@ jobs:
         run: |
 
           mkdir -pv build/userpatches
-          rsync -av userpatches/${{env.USERPATCHES_DIR}}/. build/userpatches/
+          rsync -av ${{env.USERPATCHES_DIR}}/. build/userpatches/
 
       # disable cache-restore
       - name: GitHub cache
