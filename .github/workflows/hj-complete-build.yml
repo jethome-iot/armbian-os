@@ -270,6 +270,10 @@ jobs:
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: ${{ secrets.GITHUB_TOKEN }}    # GitHub actions builtin token. repo has to have pkg access.
 
+      - shell: bash
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -387,6 +391,10 @@ jobs:
       # cleaning self hosted runners
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         uses: armbian/actions/runner-clean@main
+
+      - shell: bash
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -550,6 +558,10 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y reprepro
           fi
+
+      - shell: bash
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       # Login to ghcr.io, for later uploading rootfs to ghcr.io
       - name: Docker Login to GitHub Container Registry
