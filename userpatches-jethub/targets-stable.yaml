@@ -27,7 +27,7 @@ targets:
 
   full-cli-stable-debian:
     enabled: yes
-    configs: [ armbian-images ]
+    configs: [ jethome-images ]
     pipeline:
       gha: *armbian-gha
       build-image: "yes"
@@ -40,7 +40,7 @@ targets:
 
   full-cli-oldstable-debian:
     enabled: yes
-    configs: [ armbian-images ]
+    configs: [ jethome-images ]
     pipeline:
       gha: *armbian-gha
       build-image: "yes"
@@ -53,7 +53,7 @@ targets:
 
   full-cli-stable-ubuntu:
     enabled: yes
-    configs: [ armbian-images ]
+    configs: [ jethome-images ]
     pipeline:
       gha: *armbian-gha
       build-image: "yes"
@@ -66,7 +66,7 @@ targets:
 
   full-cli-release-ubuntu:
     enabled: yes
-    configs: [ armbian-images ]
+    configs: [ jethome-images ]
     pipeline:
       gha: *armbian-gha
       build-image: "yes"
