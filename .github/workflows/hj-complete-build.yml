@@ -124,7 +124,7 @@ jobs:
           # Get full version tag
           versionfile="${{ steps.versionfile.outputs.file }}.json"
           versionfilejethome="${{ steps.versionfile.outputs.file }}-jethome.json"
-          echo "version=$(cat ${versionfile} | jq .version)-jethome.$(cat ${versionfilejethome} | jq .version)" >> $GITHUB_OUTPUT
+          echo "version=$(cat ${versionfile} | jq .version)-jethome.$(cat ${versionfilejethome} | jq -r .version | cut -d '.' -f 3 | xargs -n 1 printf '%02d')" >> $GITHUB_OUTPUT
 
       - name: "Generate body file"
         run: |
@@ -142,7 +142,7 @@ jobs:
       - uses: ncipollo/release-action@v1
         if: ${{ github.repository_owner == 'jethome-iot' && github.event.inputs.versionOverride == '' }}
         with:
-          tag: ${{ steps.changeversion.outputs.tag }}
+          tag: ${{ steps.changelog.outputs.version }}
           name: "${{ steps.changeversion.outputs.tag }}"
           bodyFile: "body.html"
           prerelease: "true"
@@ -153,8 +153,8 @@ jobs:
       - name: Save
         id: releases
         run: |
-          echo "Version: ${{ steps.changeversion.outputs.tag }}${{ github.event.inputs.versionOverride }}"
-          echo "version=${{ steps.changeversion.outputs.tag }}${{ github.event.inputs.versionOverride }}" >> $GITHUB_OUTPUT
+          echo "Version: ${{ steps.changelog.outputs.version }}${{ github.event.inputs.versionOverride }}"
+          echo "version=${{ steps.changelog.outputs.version }}${{ github.event.inputs.versionOverride }}" >> $GITHUB_OUTPUT
 
     outputs:
 
