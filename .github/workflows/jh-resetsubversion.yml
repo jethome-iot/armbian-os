@@ -1,0 +1,51 @@
+name: Reset jethome version on version bump
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - stable.json
+      - nightly.json
+
+jobs:
+  resetversion:
+    name: Reset subversion
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout the repository
+      uses: actions/checkout@v3
+      with:
+        persist-credentials: true
+
+
+    - name: Get changed files for push
+      if: github.event_name == 'push'
+      id: changed_files_push
+      uses: jitterbit/get-changed-files@v1
+
+    - name: Fix versoim
+      id: fixversion
+      run: |
+        for file in ${{ steps.changed_files_push.outputs.all }}; do
+          if [[ "$file" == nightly.json ]]; then
+
+            temp=$(mktemp)
+            cat "nightly-jethome.json" | jq '.version |= "0.1.0"' > "${temp}"
+            mv "${temp}" "nightly-jethome.json"
+            rm -f "${temp}"
+
+          elif [[ "$file" == stable.json ]]; then
+
+            temp=$(mktemp)
+            cat "stable-jethome.json" | jq '.version |= "0.1.0"' > "${temp}"
+            mv "${temp}" "stable-jethome.json"
+            rm -f "${temp}"
+          fi
+        done
+
+    - shell: bash
+      run: |
+        git commit -am "Clean jethome-version"         
+        git push
+
