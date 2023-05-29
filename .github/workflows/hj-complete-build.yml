@@ -5,40 +5,73 @@ on:
   #  - cron: '0 1 * * *' # Scheduled runs every day at 2am UTC
   workflow_dispatch:
     inputs:
-      release:
-        description: 'Release stable/nightly, if no nightly build'
-        options: [ 'nightly', 'stable' ]
+      skipImages:
+        description: 'Skip building images? no = build images, yes = skip images'
+        required: true
+        options: [ 'yes', 'no' ]
+        default: 'no'
         type: choice
-        default: 'nightly'
-      versionOverride:
-        description: 'Version override'
+      checkOci:
+        description: 'Check OCI for existing artifacts? yes = check OCI, no = always build everything'
+        required: true
+        options: [ 'yes', 'no' ]
+        default: 'no'
+        type: choice
+      extraParamsAllBuilds:
+        description: 'Extra params for all builds/jobs (prepare/artifact/image) (eg: DEBUG=yes)'
         required: false
         default: ''
+        type: string
+      nightlybuild:
+        description: 'yes = nighlty, no = stable'
+        required: false
+        options: [ 'yes', 'no' ]
+        default: 'yes'
+        type: choice
+      uploadtoserver:
+        description: 'CDN upload  github = releases, jethome = fw.jethome.ru'
+        required: false
+        options: [ 'github', 'jethome', 'both' ]
+        default: 'github'
+        type: choice
+      versionOverride:
+        description: 'Version override. Leave empty for automatic bump'
+        required: false
+        default: ''
+      build_ref:
+        description: 'Build repo ref (branch, tag, sha1)'
+        required: false
+        default: 'main-jethub'
+
 
 env:
+
+  # For easier reuse across the multiple chunks ('armbian/build' repo)
+  BUILD_REPOSITORY: "jethome-iot/armbian-build"
+  BUILD_REF: "${{ github.event.inputs.build_ref || 'main-jethub' }}" # branch or tag or sha1
+
   # For easier reuse across the multiple chunks ('armbian/os' repo)
   USERPATCHES_REPOSITORY: "jethome-iot/armbian-os"
   USERPATCHES_REF: "main" # branch or tag or sha1
   USERPATCHES_DIR: "userpatches-jethub" # folder inside USERPATCHES_REPOSITORY
 
-  # For easier reuse across the multiple chunks ('armbian/build' repo)
-  BUILD_REPOSITORY: "jethome-iot/armbian-build"
-  BUILD_REF: "main-jethub" # branch or tag or sha1
+  # Armbian envs. Adjust to your needs.
+  # This makes builds faster, but only if the Docker images are up-to-date with all dependencies, Python, tools, etc. Otherwise it makes it... slower.
+  DOCKER_SKIP_UPDATE: "yes" # Do not apt update/install/requirements/etc during Dockerfile build, trust that Docker images are up-to-date.
 
+  # Added to every build, even the prepare job.
   EXTRA_PARAMS_ALL_BUILDS: "${{ github.event.inputs.extraParamsAllBuilds }}"
 
   # To use GitHub CLI in a GitHub Actions workflow
-  #GH_TOKEN: ${{ secrets.ACCESS_TOKEN }}
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Added to every image build arguments.
   EXTRA_PARAMS_IMAGE: "'DONT_BUILD_ARTIFACTS=any,kernel,firmware,full_firmware,rootfs,fake_ubuntu_advantage_tools,armbian-config,armbian-zsh,armbian-plymouth-theme' COMPRESS_OUTPUTIMAGE=xz,sha SHOW_DEBIAN=yes SHARE_LOG=yes "
 
-
 jobs:
 
   version_prep:
-    name: "Prepare version"
+    name: "Bump version"
     runs-on: [ "ubuntu-latest" ]
     steps:
       # Clone the userpatches repo (`armbian/os`)
@@ -50,6 +83,18 @@ jobs:
           ref: ${{ env.USERPATCHES_REF }}
           fetch-depth: 0
           clean: false # true is default.
+
+      - name: Determine version
+        id: versionfile
+        run: |
+
+          if [ "${{ github.event.inputs.nightlybuild }}" == "no" ]; then
+              echo "pre_release=false" >> $GITHUB_OUTPUT
+              echo "file=stable" >> $GITHUB_OUTPUT
+          else
+            echo "file=nightly" >> $GITHUB_OUTPUT
+            echo "pre_release=true" >> $GITHUB_OUTPUT
+          fi
 
       # Bump version automatically
       - name: Bump version
@@ -66,8 +111,8 @@ jobs:
           skip-on-empty: 'false'
           skip-commit: 'false'
           skip-ci: 'false'
-          version-file: "${{ github.event.inputs.release || 'nightly' }}-jethome.json"
-          pre-release: "false"
+          version-file: "${{ steps.versionfile.outputs.file }}-jethome.json"
+          pre-release: "${{ steps.versionfile.outputs.pre_release }}"
           git-branch: 'main'
           tag-prefix: ''
           pre-release-identifier: 'trunk'
@@ -77,8 +122,8 @@ jobs:
         id: changelog
         run: |
           # Get full version tag
-          versionfile="${{ github.event.inputs.release || 'nightly' }}.json"
-          versionfilejethome="${{ github.event.inputs.release || 'nightly' }}-jethome.json"
+          versionfile="${{ steps.versionfile.outputs.file }}.json"
+          versionfilejethome="${{ steps.versionfile.outputs.file }}-jethome.json"
           echo "version=$(cat ${versionfile} | jq .version)-jethome.$(cat ${versionfilejethome} | jq .version)" >> $GITHUB_OUTPUT
 
       - name: "Generate body file"
@@ -184,7 +229,7 @@ jobs:
         run: |
           # this sets outputs "artifact-matrix" #and "image-matrix"
           cd build
-          bash ./compile.sh gha-matrix jethome-images CLEAN_INFO=yes CLEAN_MATRIX=yes MATRIX_ARTIFACT_CHUNKS=1 MATRIX_IMAGE_CHUNKS=1 CHECK_OCI=yes TARGETS_FILENAME=targets-full.yaml ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes #  IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
+          bash ./compile.sh gha-matrix jethome-images BETA=${{ github.event.inputs.nightlybuild || 'yes' }} CLEAN_INFO=yes CLEAN_MATRIX=yes MATRIX_ARTIFACT_CHUNKS=1 MATRIX_IMAGE_CHUNKS=1 CHECK_OCI=${{ github.event.inputs.checkOci }} TARGETS_FILENAME=targets-full.yaml SKIP_IMAGES=${{ github.event.inputs.skipImages || 'yes' }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes #  IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
 
       - name: "Logs: ${{ steps.prepare-matrix.outputs.logs_url }}"
         if: always()
@@ -209,13 +254,13 @@ jobs:
 
 # template file: 150.per-chunk-artifacts_prep-outputs.yaml
 
-      # artifacts-1 of 17
+      # artifacts-1 of 1
       artifacts-chunk-json-1: ${{ steps.prepare-matrix.outputs.artifacts-chunk-json-1 }}
       artifacts-chunk-not-empty-1: ${{ steps.prepare-matrix.outputs.artifacts-chunk-not-empty-1 }}
       artifacts-chunk-size-1: ${{ steps.prepare-matrix.outputs.artifacts-chunk-size-1 }}
 # template file: 151.per-chunk-images_prep-outputs.yaml
 
-      # artifacts-1 of 16
+      # artifacts-1 of 1
       images-chunk-json-1: ${{ steps.prepare-matrix.outputs.images-chunk-json-1 }}
       images-chunk-not-empty-1: ${{ steps.prepare-matrix.outputs.images-chunk-not-empty-1 }}
       images-chunk-size-1: ${{ steps.prepare-matrix.outputs.images-chunk-size-1 }}
@@ -225,7 +270,7 @@ jobs:
   # ------ aggregate all artifact chunks into a single dependency -------
 
   all-artifacts-ready:
-    name: "artifacts chunks ready"
+    name: "artifacts chunk ready"
     runs-on: ubuntu-latest # not going to run, anyway, but is required.
     if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
     needs: [ "matrix_prep", "build-artifacts-chunk-1" ] # <-- HERE: all artifact chunk numbers.
@@ -234,7 +279,7 @@ jobs:
         run: uptime
 
   all-images-ready:
-    name: "image chunks ready"
+    name: "image chunk ready"
     runs-on: ubuntu-latest # not going to run, anyway, but is required.
     if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
     needs: [ "matrix_prep", "build-images-chunk-1" ] # <-- HERE: all image chunk numbers.
@@ -243,7 +288,7 @@ jobs:
         run: uptime
 
   all-artifacts-and-images-ready:
-    name: "artifacts and 16 image chunks ready"
+    name: "artifacts and image chunks ready"
     runs-on: ubuntu-latest # not going to run, anyway, but is required.
     if: ${{ !cancelled() && ( 1 == 2 ) }} # eg: never run.
     needs: [ "matrix_prep", "all-artifacts-ready", "all-images-ready" ]
@@ -317,6 +362,7 @@ jobs:
           echo "Logs: ${{ steps.build.outputs.logs_url }}"
 
       - name: Install SSH key for storage
+        if: 0
         env:
           KEY_ARMBIAN_UPLOAD: ${{ secrets.KEY_ARMBIAN_UPLOAD }}
         if: env.KEY_ARMBIAN_UPLOAD != null
@@ -329,7 +375,11 @@ jobs:
       - name: Check API rate limits
         run: |
 
-          # install dependencies
+          # install dependencies   
+          if ! command -v "gh" > /dev/null 2>&1; then
+             sudo apt-get update
+             sudo apt-get -y -qq install gh
+          fi
           if ! command -v "gh" > /dev/null 2>&1; then
              type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
@@ -377,6 +427,25 @@ jobs:
           # upload artifacts
           lftp -u upload, -e "set net:timeout 4;set net:max-retries 6;mirror -R --include-glob *.deb --no-empty-dirs --parallel=8 --no-perms output/debs/ debs/ ;bye" sftp://${{ env.ARMBIAN_HOST_UPLOAD }}
 
+      - name: Get deb file list
+        id: filelist
+        run: |
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo $(ls output/debs/linux-*.deb | tr '\n' ' ') >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Deploy to server
+        if: 0
+        uses: jethome-iot/actions/repo-upload@master
+        with:
+          path: '.'
+          files: ${{ steps.filelist.outputs.files }}
+          hostpath: '/home/repo/armbian'
+          branch: ${{ inputs.release }}
+          distro: ${{ inputs.distro }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          SSH_KNOWNHOSTS_UPLOAD: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD }}
+  
       - name: "Cleanup artefacts"
         if: always()
         run: rm -rfv output/debs
