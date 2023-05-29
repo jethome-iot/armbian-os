@@ -516,7 +516,7 @@ jobs:
           omitPrereleaseDuringUpdate: true
           allowUpdates: true
           artifactErrorsFailBuild: false
-          token: ${{ secrets.ACCESS_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy to server
         timeout-minutes: 90
