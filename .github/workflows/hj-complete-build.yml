@@ -112,7 +112,7 @@ jobs:
           skip-commit: 'false'
           skip-ci: 'false'
           version-file: "${{ steps.versionfile.outputs.file }}-jethome.json"
-          pre-release: "${{ steps.versionfile.outputs.pre_release }}"
+          pre-release: false
           git-branch: 'main'
           tag-prefix: ''
           pre-release-identifier: 'trunk'
@@ -122,9 +122,11 @@ jobs:
         id: changelog
         run: |
           # Get full version tag
-          versionfile="${{ steps.versionfile.outputs.file }}.json"
-          versionfilejethome="${{ steps.versionfile.outputs.file }}-jethome.json"
-          echo "version=$(cat ${versionfile} | jq .version)-jethome.$(cat ${versionfilejethome} | jq -r .version | cut -d '.' -f 3 | xargs -n 1 printf '%02d')" >> $GITHUB_OUTPUT
+          VERSION=$(jq -r '.version' ${{ steps.versionfile.outputs.file }}.json)
+          VERSIONJH="jh.$(jq -r '.version' ${{ steps.versionfile.outputs.file }}-jethome.json | cut -d '.' -f 3 | xargs -n 1 printf '%02d')"
+
+          echo "${VERSION}.${VERSIONJH}" > VERSION
+          echo 'version=${VERSION}.${VERSIONJH}' >> $GITHUB_OUTPUT
 
       - name: "Generate body file"
         run: |
@@ -188,6 +190,22 @@ jobs:
           fetch-depth: 0
           clean: false # true is default.
           path: userpatches
+
+      - name: "Fix Armbian version"
+        if: 0
+        id: armbianversion
+        uses: jethome-iot/actions/armbian-version@master
+        with:
+          pathos: userpatches
+          patharmbian: build
+          beta: ${{ github.event.inputs.nightlybuild || 'yes' }}
+
+      - name: "Update version"
+        run: |
+          cd build
+          echo -n "Version before: $(cat VERSION) "
+          echo "${{ needs.version_prep.outputs.version }}" > VERSION
+          echo " and Version after: $(cat VERSION)"
 
       - name: "grab the sha1 of the latest commit of the build repo ${{ env.BUILD_REPOSITORY }}#${{ env.BUILD_REF }}"
         id: latest-commit
@@ -344,6 +362,22 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
+      - name: "Fix Armbian version"
+        if: 0
+        id: armbianversion
+        uses: jethome-iot/actions/armbian-version@master
+        with:
+          pathos: userpatches.repo
+          patharmbian: ./
+          beta: ${{ github.event.inputs.nightlybuild || 'yes' }}
+
+      - name: "Update version"
+        run: |
+          cd build
+          echo -n "Version before: $(cat VERSION) "
+          echo "${{ needs.version_prep.outputs.version }}" > VERSION
+          echo " and Version after: $(cat VERSION)"
+
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -493,6 +527,22 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
+      - name: "Fix Armbian version"
+        if: 0
+        id: armbianversion
+        uses: jethome-iot/actions/armbian-version@master
+        with:
+          pathos: userpatches.repo
+          patharmbian: ./
+          beta: ${{ github.event.inputs.nightlybuild || 'yes' }}
+
+      - name: "Update version"
+        run: |
+          cd build
+          echo -n "Version before: $(cat VERSION) "
+          echo "${{ needs.version_prep.outputs.version }}" > VERSION
+          echo " and Version after: $(cat VERSION)"
+  
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -673,6 +723,22 @@ jobs:
           fetch-depth: 1
           clean: false # true is default.
           path: userpatches.repo
+
+      - name: "Fix Armbian version"
+        if: 0
+        id: armbianversion
+        uses: jethome-iot/actions/armbian-version@master
+        with:
+          pathos: userpatches.repo
+          patharmbian: ./
+          beta: ${{ github.event.inputs.nightlybuild || 'yes' }}
+
+      - name: "Update version"
+        run: |
+          cd build
+          echo -n "Version before: $(cat VERSION) "
+          echo "${{ needs.version_prep.outputs.version }}" > VERSION
+          echo " and Version after: $(cat VERSION)"
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
