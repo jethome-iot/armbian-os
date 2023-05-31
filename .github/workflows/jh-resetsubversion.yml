@@ -1,6 +1,7 @@
 name: Reset jethome version on version bump
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -31,14 +32,18 @@ jobs:
           if [[ "$file" == nightly.json ]]; then
 
             temp=$(mktemp)
-            cat "nightly-jethome.json" | jq '.version |= "0.1.0"' > "${temp}"
+            VERSIONM="jh.$(jq -r '.version' nightly-jethome.json | cut -d '.' -f 2 | xargs -n 1 printf '%02d')"
+            VER="0.${VERSIONM}.0"
+            cat "nightly-jethome.json" | jq '.version |= "${VER}"' > "${temp}"
             mv "${temp}" "nightly-jethome.json"
             rm -f "${temp}"
 
           elif [[ "$file" == stable.json ]]; then
 
             temp=$(mktemp)
-            cat "stable-jethome.json" | jq '.version |= "0.1.0"' > "${temp}"
+            VERSIONM="jh.$(jq -r '.version' stable-jethome.json | cut -d '.' -f 2 | xargs -n 1 printf '%02d')"
+            VER="0.${VERSIONM}.0"
+            cat "stable-jethome.json" | jq '.version |= "${VER}"' > "${temp}"
             mv "${temp}" "stable-jethome.json"
             rm -f "${temp}"
           fi
