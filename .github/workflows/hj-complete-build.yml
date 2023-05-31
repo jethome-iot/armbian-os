@@ -373,7 +373,6 @@ jobs:
 
       - name: "Update version"
         run: |
-          cd build
           echo -n "Version before: $(cat VERSION) "
           echo "${{ needs.version_prep.outputs.version }}" > VERSION
           echo " and Version after: $(cat VERSION)"
@@ -538,7 +537,6 @@ jobs:
 
       - name: "Update version"
         run: |
-          cd build
           echo -n "Version before: $(cat VERSION) "
           echo "${{ needs.version_prep.outputs.version }}" > VERSION
           echo " and Version after: $(cat VERSION)"
@@ -735,7 +733,6 @@ jobs:
 
       - name: "Update version"
         run: |
-          cd build
           echo -n "Version before: $(cat VERSION) "
           echo "${{ needs.version_prep.outputs.version }}" > VERSION
           echo " and Version after: $(cat VERSION)"
