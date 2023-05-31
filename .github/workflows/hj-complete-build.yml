@@ -125,8 +125,8 @@ jobs:
           VERSION=$(jq -r '.version' ${{ steps.versionfile.outputs.file }}.json)
           VERSIONJH="jh.$(jq -r '.version' ${{ steps.versionfile.outputs.file }}-jethome.json | cut -d '.' -f 3 | xargs -n 1 printf '%02d')"
 
-          echo "${VERSION}.${VERSIONJH}" > VERSION
-          echo 'version=${VERSION}.${VERSIONJH}' >> $GITHUB_OUTPUT
+          echo "version=${VERSION}.${VERSIONJH}"
+          echo "version=${VERSION}.${VERSIONJH}" >> $GITHUB_OUTPUT
 
       - name: "Generate body file"
         run: |
