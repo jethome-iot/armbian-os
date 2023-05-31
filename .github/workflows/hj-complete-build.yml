@@ -797,6 +797,14 @@ jobs:
         run: |
           echo "Logs debs-to-repo-reprepro: ${{ steps.prepare-scripts-reprepro.outputs.logs_url }}"
 
+      - name: "List files"
+        run: |
+          find output/debs
+          cat output/info/debs-to-repo-info.json
+          echo "!!!!!!!!!!!!!!!!!"
+          cat output/info/reprepro/reprepro.sh
+          exit 1
+  
       - name: Run the reprepro scripts
         id: run-scripts-reprepro
         env:
