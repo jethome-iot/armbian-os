@@ -58,7 +58,7 @@ jobs:
             temp=$(mktemp)
             VERSIONM="jh.$(jq -r '.version' stable-jethome.json | cut -d '.' -f 2 | xargs -n 1 printf '%02d')"
             VER="0.${VERSIONM}.0"
-            cat "stable-jethome.json" | jq '.version |= "${VER}"' > "${temp}"
+            cat "stable-jethome.json" | jq ".version |= \"${VER}\"" > "${temp}"
             mv "${temp}" "stable-jethome.json"
             rm -f "${temp}"
           fi
