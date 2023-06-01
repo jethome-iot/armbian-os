@@ -47,7 +47,7 @@ jobs:
           if [[ "$file" == nightly.json ]]; then
 
             temp=$(mktemp)
-            VERSIONM="jh.$(jq -r '.version' nightly-jethome.json | cut -d '.' -f 2 | xargs -n 1 printf '%02d')"
+            VERSIONM="$(jq -r '.version' nightly-jethome.json | cut -d '.' -f 2 | xargs -n 1 printf '%02d')"
             VER="0.${VERSIONM}.0"
             cat "nightly-jethome.json" | jq ".version |= \"${VER}\"" > "${temp}"
             mv "${temp}" "nightly-jethome.json"
@@ -56,7 +56,7 @@ jobs:
           elif [[ "$file" == stable.json ]]; then
 
             temp=$(mktemp)
-            VERSIONM="jh.$(jq -r '.version' stable-jethome.json | cut -d '.' -f 2 | xargs -n 1 printf '%02d')"
+            VERSIONM="$(jq -r '.version' stable-jethome.json | cut -d '.' -f 2 | xargs -n 1 printf '%02d')"
             VER="0.${VERSIONM}.0"
             cat "stable-jethome.json" | jq ".version |= \"${VER}\"" > "${temp}"
             mv "${temp}" "stable-jethome.json"
