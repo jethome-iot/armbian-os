@@ -1,6 +1,6 @@
 {
   "name": "Armbian OS Additional version",
-  "version": "0.02.0",
+  "version": "0.2.0",
   "description": "Linux for ARM development boards",
   "keywords": [
     "ARM",
