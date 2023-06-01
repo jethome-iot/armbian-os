@@ -45,6 +45,8 @@ on:
       skip_version_bump:
         description: 'Skip version bump? true = skip, false = bump'
         required: false
+        options: [ 'true', 'false' ]
+        type: choice
         default: 'false'
 
 
@@ -115,7 +117,7 @@ jobs:
           output-file: 'false'
           skip-version-file: '${{ github.event.inputs.skip_version_bump }}'
           skip-on-empty: 'false'
-          skip-commit: 'false'
+          skip-commit: '${{ github.event.inputs.skip_version_bump }}'
           skip-ci: 'false'
           version-file: "${{ steps.versionfile.outputs.file }}-jethome.json"
           pre-release: false
