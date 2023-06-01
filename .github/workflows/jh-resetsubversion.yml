@@ -49,7 +49,7 @@ jobs:
             temp=$(mktemp)
             VERSIONM="jh.$(jq -r '.version' nightly-jethome.json | cut -d '.' -f 2 | xargs -n 1 printf '%02d')"
             VER="0.${VERSIONM}.0"
-            cat "nightly-jethome.json" | jq '.version |= "${VER}"' > "${temp}"
+            cat "nightly-jethome.json" | jq ".version |= \"${VER}\"" > "${temp}"
             mv "${temp}" "nightly-jethome.json"
             rm -f "${temp}"
 
