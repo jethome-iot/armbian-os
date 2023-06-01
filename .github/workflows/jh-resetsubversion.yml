@@ -1,7 +1,16 @@
-name: Reset jethome version on version bump
+name: JH Reset jethome version on version bump
 
 on:
   workflow_dispatch:
+    inputs:
+      resetfiles:
+        required: true
+        type: choice
+        options:
+          - "stable.json"
+          - "nightly.json"
+          - "stable.json nightly.json"
+
   push:
     branches:
       - main
@@ -25,10 +34,16 @@ jobs:
       id: changed_files_push
       uses: jitterbit/get-changed-files@v1
 
+    - name: Get files from input
+      if: github.event_name == 'workflow_dispatch'
+      id: changed_files_dispatch
+      run: |
+        echo "all=${{ github.event.inputs.resetfiles }}" >> $GITHUB_OUTPUT
+
     - name: Fix versoim
       id: fixversion
       run: |
-        for file in ${{ steps.changed_files_push.outputs.all }}; do
+        for file in ${{ steps.changed_files_push.outputs.all }} ${{ steps.changed_files_dispatch.outputs.all }}; do
           if [[ "$file" == nightly.json ]]; then
 
             temp=$(mktemp)
