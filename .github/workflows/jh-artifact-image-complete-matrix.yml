@@ -142,6 +142,14 @@ jobs:
           git config --local user.name "Armbianworker"
           git commit --allow-empty -m "Update board list within actions" -a
 
+      - name: Push changes
+        if: ${{ github.event.inputs.skip_version_bump != 'true' }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repository: jethome-iot/armbian-os
+          branch: ${{ github.ref }}
+
       - name: Get version tag
         id: changelog
         run: |
@@ -393,7 +401,12 @@ jobs:
 
           # install dependencies
           if ! command -v "gh" > /dev/null 2>&1; then
-             sudo apt-get -y -qq install gh
+             type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+             && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+             && sudo apt update \
+             && sudo apt install gh -y
           fi
 
           while true
@@ -494,7 +507,12 @@ jobs:
 
           # install dependencies
           if ! command -v "gh" > /dev/null 2>&1; then
-             sudo apt-get -y -qq install gh
+             type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+             && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+             && sudo apt update \
+             && sudo apt install gh -y
           fi
 
           while true
