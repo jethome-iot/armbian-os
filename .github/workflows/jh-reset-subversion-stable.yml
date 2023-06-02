@@ -19,7 +19,7 @@ jobs:
         persist-credentials: true
 
     - name: Zero minor version
-      uses: jethome-iot/actions/armbian-jethome-version
+      uses: jethome-iot/actions/armbian-jethome-version@master
       id: fixversion
       with:
         file: 'stable-jethome.json'
@@ -27,7 +27,7 @@ jobs:
         do: 'zero'
 
     - name: Inc majom version
-      uses: jethome-iot/actions/armbian-jethome-version
+      uses: jethome-iot/actions/armbian-jethome-version@master
       id: incversion
       with:
         file: 'stable-jethome.json'
