@@ -3,8 +3,8 @@ common-gha-configs:
     runners:
       default: "ubuntu-latest" # or a ["tag", "list"]
       by-name:
-        kernel: [ "ubuntu-latest" ]
-        uboot: [ "ubuntu-latest" ]
+        kernel: [ "self-hosted", "Linux" ]
+        uboot: [ "self-hosted", "Linux" ]
         armbian-bsp-cli: [ "ubuntu-latest" ]
       by-name-and-arch:
         rootfs-armhf: [ "ubuntu-latest" ]
