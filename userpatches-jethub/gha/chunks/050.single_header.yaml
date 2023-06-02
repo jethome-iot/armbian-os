@@ -105,13 +105,15 @@ jobs:
         run: |
 
           if [ "${{ github.event.inputs.nightlybuild }}" == "no" ]; then
-              echo "pre_release=false" >> $GITHUB_OUTPUT
-              echo "file=stable" >> $GITHUB_OUTPUT
-              echo "repoupload=armbian-test" >> $GITHUB_OUTPUT
+            echo "pre_release=false" >> $GITHUB_OUTPUT
+            echo "file=stable" >> $GITHUB_OUTPUT
+            echo "repoupload=armbian-test" >> $GITHUB_OUTPUT
+            echo "TARGETS_FILENAME=targets-stable.yaml" >> $GITHUB_ENV
           else
             echo "file=nightly" >> $GITHUB_OUTPUT
             echo "pre_release=true" >> $GITHUB_OUTPUT
             echo "repoupload=armbian-beta" >> $GITHUB_OUTPUT
+            echo "TARGETS_FILENAME=targets-full.yaml" >> $GITHUB_ENV
           fi
 
       - name: Read Version
@@ -140,8 +142,8 @@ jobs:
       - name: Get version tag
         id: changelog
         run: |
-          echo "tag={{ env.VERSION_OVERRIDE }}"
-          echo "tag={{ env.VERSION_OVERRIDE }}">> $GITHUB_OUTPUT
+          echo "tag=${{ env.VERSION_OVERRIDE }}"
+          echo "tag=${{ env.VERSION_OVERRIDE }}">> $GITHUB_OUTPUT
 
       - name: "Generate body file"
         run: |
@@ -249,7 +251,7 @@ jobs:
         run: |
           # this sets outputs "artifact-matrix" #and "image-matrix"
           cd build
-          bash ./compile.sh gha-matrix [[userpatches_config_for_prepare_job]]  BETA=${{ github.event.inputs.nightlybuild || 'yes' }} CLEAN_INFO=yes CLEAN_MATRIX=yes MATRIX_ARTIFACT_CHUNKS=[[num_chunks_artifacts]] MATRIX_IMAGE_CHUNKS=[[num_chunks_images]] CHECK_OCI=${{ github.event.inputs.checkOci  || 'yes' }} TARGETS_FILENAME=targets.yaml SKIP_IMAGES=${{ github.event.inputs.skipImages || 'yes' }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes #  IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
+          bash ./compile.sh gha-matrix [[userpatches_config_for_prepare_job]]  BETA=${{ github.event.inputs.nightlybuild || 'yes' }} CLEAN_INFO=yes CLEAN_MATRIX=yes MATRIX_ARTIFACT_CHUNKS=[[num_chunks_artifacts]] MATRIX_IMAGE_CHUNKS=[[num_chunks_images]] CHECK_OCI=${{ github.event.inputs.checkOci  || 'yes' }} TARGETS_FILENAME=${{ env.TARGETS_FILENAME }} SKIP_IMAGES=${{ github.event.inputs.skipImages || 'yes' }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes #  IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
 
       - name: "Logs: ${{ steps.prepare-matrix.outputs.logs_url }}"
         if: always()
