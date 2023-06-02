@@ -139,6 +139,14 @@ jobs:
           git config --local user.name "Armbianworker"
           git commit --allow-empty -m "Update board list within actions" -a
 
+      - name: Push changes
+        if: ${{ github.event.inputs.skip_version_bump != 'true' }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repository: jethome-iot/armbian-os
+          branch: ${{ github.ref }}
+
       - name: Get version tag
         id: changelog
         run: |
