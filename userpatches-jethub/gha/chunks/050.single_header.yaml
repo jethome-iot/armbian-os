@@ -117,26 +117,31 @@ jobs:
       - name: Read Version
         #if: ${{ github.event.inputs.skipImages != 'yes' }}
         run: |
-          SUBVER=$(cat '${{ steps.versionfile.outputs.file }}-jethome.json' | jq '.version')
-          VER=$(cat "${{ steps.versionfile.outputs.file }}.json" | jq '.version')
-          echo ${VER}.jh.${SUBVER}| sed "s/\"//g" | sed 's/^/VERSION_OVERRIDE=/' >> $GITHUB_ENV
+          SUBVER=$(cat "${{ steps.versionfile.outputs.file }}-jethome.json" | jq -r '.version')
+          VER=$(cat "${{ steps.versionfile.outputs.file }}.json" | jq -r '.version')
+          echo "VERSION_OVERRIDE=${VER}.jh.${SUBVER}"
+          echo "VERSION_OVERRIDE=${VER}.jh.${SUBVER}" >> $GITHUB_ENV
 
       - name: Bump jethome subversion
         id: bumpjhver
+        if: ${{ github.event.inputs.skip_version_bump != 'true' }}
         uses: jethome-iot/actions/armbian-jethome-version@master
         with:
           file: ${{ steps.versionfile.outputs.file }}-jethome.json
 
+      - name: commit & push version bump
+        if: ${{ github.event.inputs.skip_version_bump != 'true' }}
+        run: |
+          git add ${{ steps.versionfile.outputs.file }}-jethome.json
+          git config --local user.email "dev@jethome.ru"
+          git config --local user.name "Armbianworker"
+          git commit --allow-empty -m "Update board list within actions" -a
+
       - name: Get version tag
         id: changelog
         run: |
-          
-          echo "tag=$(cat ${{ steps.versionfile.outputs.file }}.json | jq -r .version).jh.${{ steps.bumpjhver.outputs.tag }}" >> $GITHUB_OUTPUT
-
-      - name: Read Version
-        if: ${{ steps.changelog.outputs.tag }}
-        run: |
-          echo "VERSION_OVERRIDE=${{ steps.changelog.outputs.tag }}" >> $GITHUB_ENV
+          echo "tag={{ env.VERSION_OVERRIDE }}"
+          echo "tag={{ env.VERSION_OVERRIDE }}">> $GITHUB_OUTPUT
 
       - name: "Generate body file"
         run: |
