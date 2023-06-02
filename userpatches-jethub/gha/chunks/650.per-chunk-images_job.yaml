@@ -45,6 +45,8 @@ jobs: # <TEMPLATE-IGNORE>
           mkdir -pv userpatches
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
           rm -rf userpatches.repo
+          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+
 
       - name: Cleanup leftover output
         run: |

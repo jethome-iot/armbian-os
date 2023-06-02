@@ -10,11 +10,13 @@ on:
         required: true
         options: [ 'yes', 'no' ]
         type: choice
+        default: 'no'
       checkOci:
         description: 'Check OCI for existing artifacts? yes = check OCI, no = always build everything'
         required: true
         options: [ 'yes', 'no' ]
         type: choice
+        default: 'no'
       extraParamsAllBuilds:
         description: 'Extra params for all builds/jobs (prepare/artifact/image) (eg: DEBUG=yes)'
         required: false
@@ -25,21 +27,33 @@ on:
         required: false
         options: [ 'yes', 'no' ]
         type: choice
+        default: 'yes'
       uploadtoserver:
-        description: 'CDN upload  github = releases, armbian = rsync.armbian.com'
+        description: 'CDN upload  github = releases, jethome = fw.jethome.ru'
         required: false
-        options: [ 'github', 'armbian', 'both' ]
+        options: [ 'github', 'jethome', 'both' ]
         type: choice
+        default: 'github'
       versionOverride:
         description: 'Version override. Leave empty for automatic bump'
         required: false
         default: ''
+      build_ref:
+        description: 'Build repo ref (branch, tag, sha1)'
+        required: false
+        default: 'main-jethub'
+      skip_version_bump:
+        description: 'Skip version bump? true = skip, false = bump'
+        required: false
+        options: [ 'true', 'false' ]
+        type: choice
+        default: 'false'
 
 env:
 
   # For easier reuse across the multiple chunks ('armbian/build' repo)
   BUILD_REPOSITORY: "[[org_and_build_repo]]"
-  BUILD_REF: "[[build_ref]]" # branch or tag or sha1
+  BUILD_REF: "${{ github.event.inputs.build_ref || '[[build_ref]]' }}" # branch or tag or sha1
 
   # For easier reuse across the multiple chunks ('armbian/os' repo)
   USERPATCHES_REPOSITORY: "[[org_and_userpatches_repo]]"
@@ -127,20 +141,12 @@ jobs:
       - name: "Generate body file"
         run: |
             echo "
-              <p align='center'>
-              <a href='https://www.armbian.com'>
-              <img src='https://raw.githubusercontent.com/armbian/.github/master/profile/tux-two.png' width='400'></a></p>
-              <h1 align=center>Rolling releases</h1>
+              <h1 align=center>JetHome Rolling releases</h1>
               <p align=center>
-              <a href='https://www.armbian.com'><img alt='Armbian Linux stable' src='https://img.shields.io/badge/dynamic/json?label=Armbian%20Linux%20current&query=CURRENT&color=f71000&cacheSeconds=600&style=for-the-badge&url=https%3A%2F%2Fgithub.com%2Farmbian%2Fscripts%2Freleases%2Fdownload%2Fstatus%2Frunners_capacity.json'></a>
-              <a href='https://www.armbian.com'><img alt='Armbian Linux rolling' src='https://img.shields.io/badge/dynamic/json?label=Armbian%20Linux%20edge&query=EDGE&color=34be5b&cacheSeconds=600&style=for-the-badge&url=https%3A%2F%2Fgithub.com%2Farmbian%2Fscripts%2Freleases%2Fdownload%2Fstatus%2Frunners_capacity.json'></a>
+              <img alt='Armbian Linux stable' src='https://img.shields.io/badge/dynamic/json?label=Armbian%20Linux%20current&query=CURRENT&color=f71000&cacheSeconds=600&style=for-the-badge&url=https%3A%2F%2Fgithub.com%2Farmbian%2Fscripts%2Freleases%2Fdownload%2Fstatus%2Frunners_capacity.json'>
+              <img alt='Armbian Linux rolling' src='https://img.shields.io/badge/dynamic/json?label=Armbian%20Linux%20edge&query=EDGE&color=34be5b&cacheSeconds=600&style=for-the-badge&url=https%3A%2F%2Fgithub.com%2Farmbian%2Fscripts%2Freleases%2Fdownload%2Fstatus%2Frunners_capacity.json'>
               </p>
               <br>
-
-              - rolling releases are available at the bottom of <a href='https://www.armbian.com/download/' target=_blanks>official download pages</a>
-              - if you want to change automated builds variants, edit <a href='https://github.com/armbian/os/tree/main/targets'>build config files</a>
-              - for old builds with unknown support status check <a href='https://archive.armbian.com' target=_blank>archives</a>
-
               <br>
               &nbsp;
               </p>" > body.html
@@ -159,7 +165,7 @@ jobs:
       - name: Save
         id: releases
         run: |
-
+          echo "Version=${{ env.VERSION_OVERRIDE }}"
           echo "version=${{ env.VERSION_OVERRIDE }}" >> $GITHUB_OUTPUT
 
     outputs:
