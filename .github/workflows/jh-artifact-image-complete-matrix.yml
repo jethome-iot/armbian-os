@@ -237,6 +237,7 @@ jobs:
 
           mkdir -pv build/userpatches
           rsync -av userpatches/${{env.USERPATCHES_DIR}}/. build/userpatches/
+          echo ${{ needs.matrix_prep.outputs.version }} > build/userpatches/VERSION
 
       - name: GitHub cache
         id: cache-restore
