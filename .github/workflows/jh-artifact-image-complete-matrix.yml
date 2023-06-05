@@ -705,6 +705,7 @@ jobs:
       - name: "Logs debs-to-repo-reprepro: ${{ steps.prepare-scripts-reprepro.outputs.logs_url }}"
         run: |
           echo "Logs debs-to-repo-reprepro: ${{ steps.prepare-scripts-reprepro.outputs.logs_url }}"
+          find output
 
       - name: Push debs to repository
         id: push-debs
