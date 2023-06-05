@@ -482,6 +482,7 @@ jobs:
       - name: Cleanup leftover output
         run: |
           rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
+          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
