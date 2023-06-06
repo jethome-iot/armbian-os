@@ -714,7 +714,7 @@ jobs:
         uses: jethome-iot/actions/repo-upload-json@master
         with:
           target: ${{ needs.version_prep.outputs.repoupload }}
-          nightly: ${{ github.event.inputs.nightlybuild }}
+          nightly: ${{ github.event.inputs.nightlybuild || 'yes' }}
           json: output/info/debs-to-repo-info.json
           SSH_KEY: ${{ secrets.SSH_KEY }}
           SSH_KNOWNHOSTS_UPLOAD: ${{ secrets.SSH_KNOWNHOSTS_UPLOAD }}
