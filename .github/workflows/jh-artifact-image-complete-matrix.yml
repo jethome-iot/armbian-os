@@ -581,14 +581,20 @@ jobs:
 
       - name: "Convert image to burn"
         run: |
+          # output/debs-beta/linux-u-boot-jethubj100-current_23.8.0-trunk.52.jh.3.4--2022.07-Se092-P870d-Hf426-V8f67-B91a8_arm64.deb
+          # output/debs-beta/linux-u-boot-jethubj100-current_${{ needs.matrix_prep.outputs.version }}--2022.07-Se092-P870d-Hf426-V8f67-B91a8_arm64.deb
+          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
+          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
           cd tools
           read -r platform branch osname cli beta crimage <<<$line
-          DEB="../output/debs*/linux-u-boot-*_arm64.deb"
+          #DEB="../output/debs*/linux-u-boot-*_arm64.deb"
+          DEB="../${UBOOTDEB}"
           dpkg -x "$DEB" output
-          if False; then
-            ./convert.sh ../output/images/*/*/Armbian_*.*img.xz d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+          find output
+          if [[ "$platform" == "jethubj100" ]]; then
+            ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
           else
-            ./convert.sh ../output/images/*/*/Armbian_*.*img.xz h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+            ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
           fi
           rm -rf output/usr
 
