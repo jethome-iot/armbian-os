@@ -583,7 +583,7 @@ jobs:
         run: |
           cd tools
           read -r platform branch osname cli beta crimage <<<$line
-          DEB="../build/output/debs*/linux-u-boot-*_arm64.deb"
+          DEB="../output/debs*/linux-u-boot-*_arm64.deb"
           dpkg -x "$DEB" output
           if False; then
             ./convert.sh ../output/images/*/*/Armbian_*.*img.xz d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
