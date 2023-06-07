@@ -100,6 +100,29 @@ jobs:
           fetch-depth: 0
           clean: false # true is default.
 
+      - name: Bump jethome subversion
+        id: bumpjhver
+        if: ${{ github.event.inputs.skip_version_bump != 'true' }}
+        uses: jethome-iot/actions/armbian-jethome-version@master
+        with:
+          file: ${{ steps.versionfile.outputs.file }}-jethome.json
+
+      - name: commit & push version bump
+        if: ${{ github.event.inputs.skip_version_bump != 'true' }}
+        run: |
+          git add ${{ steps.versionfile.outputs.file }}-jethome.json
+          git config --local user.email "dev@jethome.ru"
+          git config --local user.name "Armbianworker"
+          git commit --allow-empty -m "Update board list within actions" -a
+
+      - name: Push changes
+        if: ${{ github.event.inputs.skip_version_bump != 'true' }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repository: jethome-iot/armbian-os
+          branch: ${{ github.ref }}
+
       - name: Determine version
         id: versionfile
         run: |
@@ -123,29 +146,6 @@ jobs:
           VER=$(cat "${{ steps.versionfile.outputs.file }}.json" | jq -r '.version')
           echo "VERSION_OVERRIDE=${VER}.jh.${SUBVER}"
           echo "VERSION_OVERRIDE=${VER}.jh.${SUBVER}" >> $GITHUB_ENV
-
-      - name: Bump jethome subversion
-        id: bumpjhver
-        if: ${{ github.event.inputs.skip_version_bump != 'true' }}
-        uses: jethome-iot/actions/armbian-jethome-version@master
-        with:
-          file: ${{ steps.versionfile.outputs.file }}-jethome.json
-
-      - name: commit & push version bump
-        if: ${{ github.event.inputs.skip_version_bump != 'true' }}
-        run: |
-          git add ${{ steps.versionfile.outputs.file }}-jethome.json
-          git config --local user.email "dev@jethome.ru"
-          git config --local user.name "Armbianworker"
-          git commit --allow-empty -m "Update board list within actions" -a
-
-      - name: Push changes
-        if: ${{ github.event.inputs.skip_version_bump != 'true' }}
-        uses: ad-m/github-push-action@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          repository: jethome-iot/armbian-os
-          branch: ${{ github.ref }}
 
       - name: Get version tag
         id: changelog
