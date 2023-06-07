@@ -123,7 +123,6 @@ jobs: # <TEMPLATE-IGNORE>
           GPG_PASSPHRASE1: ${{ secrets.GPG_PASSPHRASE1 }}
         if: env.GPG_PASSPHRASE1 != null
         run: |
-
           echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img.xz
 
       - name: "Upload artefacts"
@@ -149,6 +148,7 @@ jobs: # <TEMPLATE-IGNORE>
           find output
 
       - name: "Convert image to burn"
+        id: convertburn
         run: |
           if ! command -v "dtc" > /dev/null 2>&1; then
              sudo apt update \
@@ -157,6 +157,7 @@ jobs: # <TEMPLATE-IGNORE>
 
           UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
           IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
+          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
 
           cd tools
 
@@ -172,43 +173,88 @@ jobs: # <TEMPLATE-IGNORE>
           fi
           rm -rf output/usr
 
-      - name: Upload images
-        if: 0
-        run: |
-         cd build
-         rsync -avr output/images/ repo@update.jethome.ru:/var/www/update.jethome.ru/armbian/$JETHOME_CI_FIRMW_DIR/
-         cd ../tools
-         rsync -avr output/ repo@update.jethome.ru:/var/www/update.jethome.ru/armbian/$JETHOME_CI_FIRMW_DIR/burn/${BUILDBRANCH}/
+          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
 
-      - name: Upload debs
-        if: 0
-        run: |
-         cd build
-         while read -r line; do
-              read -r platform branch osname cli beta crimage <<<$line
-              rsync -avr output/debs/ repo@update.jethome.ru:/home/repo/armbian/${osname}
-         done <<< "$(cat userpatches/targets.conf)"
+          ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
+          eval ${{ matrix.invocation }}
 
+          case ${BOARD} in
+            jethubj100)
+              SUPPORTED="D1,D1P"
+              ;;
+            jethubj80)
+              SUPPORTED="H1"
+              ;;
+            *)
+              exit 200
+              ;;
+          esac
 
-      - name: Deploy to server
-        timeout-minutes: 90
-        env:
-          KEY_ARMBIAN_UPLOAD: ${{ secrets.KEY_ARMBIAN_UPLOAD }}
-          ARMBIAN_HOST_UPLOAD: ${{ secrets.ARMBIAN_HOST_UPLOAD }}
+          if [[ "$BETA" == "yes" ]]; then
+            case ${BUILD_REF} in
+              main*)
+                CHANNEL="nightly"
+                ;;
+              v2*)
+                CHANNEL="rc"
+                ;;
+              *)
+                CHANNEL="${BUILD_REF}"
+                ;;
+            esac
 
-        if: ${{ env.KEY_ARMBIAN_UPLOAD != null && env.ARMBIAN_HOST_UPLOAD != null && ( github.event.inputs.uploadtoserver == 'armbian' || github.event.inputs.uploadtoserver == 'both' ) }}
-        run: |
-
-          # install dependencies
-          if ! command -v "lftp" > /dev/null 2>&1; then
-             sudo apt-get -y -qq install lftp
+          else
+            CHANNEL="release"
           fi
 
-          # upload image
-          lftp -u upload, -e "set net:timeout 4;set net:max-retries 6;mirror -R --no-empty-dirs --parallel=8 --no-perms output/images/ nightly/ ;bye" sftp://${{ env.ARMBIAN_HOST_UPLOAD }}
+          echo "board=${BOARD}" >> $GITHUB_OUTPUT
+          echo "brd=${BOARD:6}"  >> $GITHUB_OUTPUT
+          echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+          echo "channel=${CHANNEL}" >> $GITHUB_OUTPUT
+          echo "release=${RELEASE}" >> $GITHUB_OUTPUT
+          echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
+          echo "image=${IMG}" >> $GITHUB_OUTPUT
+          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
 
-          # upload artifacts
-          lftp -u upload, -e "set net:timeout 4;set net:max-retries 6;mirror -R --include-glob *.deb --no-empty-dirs --parallel=8 --no-perms output/debs/ debs/ ;bye" sftp://${{ env.ARMBIAN_HOST_UPLOAD }}
+      - name: Sign burn
+        env:
+          GPG_PASSPHRASE1: ${{ secrets.GPG_PASSPHRASE1 }}
+        if: env.GPG_PASSPHRASE1 != null
+        run: |
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes {{ steps.convertburn.outputs.imageburn }}
+
+      - name: Deploy to fw.jethome.ru (sdcard)
+        id: upload-sdcard
+        uses: jethome-iot/actions/firmware-upload@master
+        with:
+          url: http://test.fw.jethome.ru
+          fullslug: "JetHome.${{ steps.convertburn.outputs.brd }}.Armbian.${{ steps.convertburn.outputs.channel }}.${{ steps.convertburn.outputs.release }}.${{ env.branch }}"
+          image_type: "sdcard"
+          firmware_file: "${{ steps.convertburn.outputs.image }}"
+          hashpgp_file: "${{ steps.convertburn.outputs.image }}.asc"
+          version: "${{ needs.matrix_prep.outputs.version }}"
+          force_overwrite: "true"
+          generatefirmwareslot: "true"
+          update_latest: "true"
+          supported_devices: "${{ steps.convertburn.outputs.supported }}"
+          FWUPLOAD: ${{ secrets.FWUPLOAD }}
+
+      - name: Deploy to fw.jethome.ru (burn)
+        id: upload-burn
+        uses: jethome-iot/actions/firmware-upload@master
+        with:
+          url: http://test.fw.jethome.ru
+          fullslug: "JetHome.${{ steps.convertburn.outputs.brd }}.Armbian.${{ steps.convertburn.outputs.channel }}.${{ steps.convertburn.outputs.release }}.${{ env.branch }}"
+          image_type: "burn"
+          firmware_file: "${{ steps.convertburn.outputs.imageburn }}"
+          hashpgp_file: "${{ steps.convertburn.outputs.imageburn }}.asc"
+          version: "${{ needs.matrix_prep.outputs.version }}"
+          date: "${{ env.DATE }}"
+          generatefirmwareslot: "false"
+          force_overwrite: "true"
+          update_latest: "true"
+          supported_devices: "${{ env.SUPPORTED }}"
+          FWUPLOAD: ${{ secrets.FWUPLOAD }}
 
       - name: "Cleanup output images"
         if: always()
