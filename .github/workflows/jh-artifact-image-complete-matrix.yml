@@ -607,7 +607,8 @@ jobs:
           IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
 
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
-          eval ${{ matrix.invocation }}
+          EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
+          eval ${EVALCMD}
 
           case ${BOARD} in
             jethubj100)
@@ -658,7 +659,7 @@ jobs:
         id: upload-sdcard
         uses: jethome-iot/actions/firmware-upload@master
         with:
-          url: http://test.fw.jethome.ru
+          url: https://fw.jethome.ru:8443
           fullslug: "JetHome.${{ steps.convertburn.outputs.brd }}.Armbian.${{ steps.convertburn.outputs.channel }}.${{ steps.convertburn.outputs.release }}.${{ env.branch }}"
           image_type: "sdcard"
           firmware_file: "${{ steps.convertburn.outputs.image }}"
@@ -674,7 +675,7 @@ jobs:
         id: upload-burn
         uses: jethome-iot/actions/firmware-upload@master
         with:
-          url: http://test.fw.jethome.ru
+          url: https://fw.jethome.ru:8443
           fullslug: "JetHome.${{ steps.convertburn.outputs.brd }}.Armbian.${{ steps.convertburn.outputs.channel }}.${{ steps.convertburn.outputs.release }}.${{ env.branch }}"
           image_type: "burn"
           firmware_file: "${{ steps.convertburn.outputs.imageburn }}"
