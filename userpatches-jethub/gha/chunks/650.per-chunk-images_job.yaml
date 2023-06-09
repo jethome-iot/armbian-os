@@ -222,7 +222,7 @@ jobs: # <TEMPLATE-IGNORE>
           GPG_PASSPHRASE1: ${{ secrets.GPG_PASSPHRASE1 }}
         if: env.GPG_PASSPHRASE1 != null
         run: |
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes {{ steps.convertburn.outputs.imageburn }}
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes ${{ steps.convertburn.outputs.imageburn }}
 
       - name: Deploy to fw.jethome.ru (sdcard)
         id: upload-sdcard
@@ -250,11 +250,10 @@ jobs: # <TEMPLATE-IGNORE>
           firmware_file: "${{ steps.convertburn.outputs.imageburn }}"
           hashpgp_file: "${{ steps.convertburn.outputs.imageburn }}.asc"
           version: "${{ needs.matrix_prep.outputs.version }}"
-          date: "${{ env.DATE }}"
           generatefirmwareslot: "false"
           force_overwrite: "true"
           update_latest: "true"
-          supported_devices: "${{ env.SUPPORTED }}"
+          supported_devices: "${{ steps.convertburn.outputs.supported }}"
           FWUPLOAD: ${{ secrets.FWUPLOAD }}
 
       - name: "Cleanup output images"
