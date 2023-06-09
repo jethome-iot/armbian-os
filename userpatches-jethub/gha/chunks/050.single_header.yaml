@@ -100,6 +100,22 @@ jobs:
           fetch-depth: 0
           clean: false # true is default.
 
+      - name: Determine version
+        id: versionfile
+        run: |
+
+          if [ "${{ github.event.inputs.nightlybuild }}" == "no" ]; then
+            echo "pre_release=false" >> $GITHUB_OUTPUT
+            echo "file=stable" >> $GITHUB_OUTPUT
+            echo "repoupload=armbian-test" >> $GITHUB_OUTPUT
+            echo "TARGETS_FILENAME=targets-stable.yaml" >> $GITHUB_ENV
+          else
+            echo "file=nightly" >> $GITHUB_OUTPUT
+            echo "pre_release=true" >> $GITHUB_OUTPUT
+            echo "repoupload=armbian-beta" >> $GITHUB_OUTPUT
+            echo "TARGETS_FILENAME=targets-full.yaml" >> $GITHUB_ENV
+          fi
+
       - name: Bump jethome subversion
         id: bumpjhver
         if: ${{ github.event.inputs.skip_version_bump != 'true' }}
@@ -122,22 +138,6 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repository: jethome-iot/armbian-os
           branch: ${{ github.ref }}
-
-      - name: Determine version
-        id: versionfile
-        run: |
-
-          if [ "${{ github.event.inputs.nightlybuild }}" == "no" ]; then
-            echo "pre_release=false" >> $GITHUB_OUTPUT
-            echo "file=stable" >> $GITHUB_OUTPUT
-            echo "repoupload=armbian-test" >> $GITHUB_OUTPUT
-            echo "TARGETS_FILENAME=targets-stable.yaml" >> $GITHUB_ENV
-          else
-            echo "file=nightly" >> $GITHUB_OUTPUT
-            echo "pre_release=true" >> $GITHUB_OUTPUT
-            echo "repoupload=armbian-beta" >> $GITHUB_OUTPUT
-            echo "TARGETS_FILENAME=targets-full.yaml" >> $GITHUB_ENV
-          fi
 
       - name: Read Version
         #if: ${{ github.event.inputs.skipImages != 'yes' }}
