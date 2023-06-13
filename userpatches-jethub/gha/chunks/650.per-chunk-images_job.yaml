@@ -165,31 +165,29 @@ jobs: # <TEMPLATE-IGNORE>
           dpkg -x "$DEB" output
           UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
           echo UBOOT: ${UBOOT}
-          find output
-          if [[ "$platform" == "jethubj100" ]]; then
-            ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
-          else
-            ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
-          fi
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          find ../output
 
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
+          echo ${EVALCMD}
+
+          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
 
           case ${BOARD} in
             jethubj100)
+              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj80)
+              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               exit 200
               ;;
           esac
+          rm -rf output/usr
 
           if [[ "$BETA" == "yes" ]]; then
             case ${BUILD_REF} in
