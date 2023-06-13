@@ -602,8 +602,9 @@ jobs:
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
-
+          find output
           IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          echo IMGBURN: ${IMGBURN}
 
           case ${BOARD} in
             jethubj100)
@@ -621,7 +622,7 @@ jobs:
           rm -rf output/usr
 
           if False; then
-            case ${BUILD_REF} in
+            case "${{ env.BUILD_REF }}" in
               main*)
                 CHANNEL="nightly"
                 ;;
