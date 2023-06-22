@@ -40,7 +40,7 @@ jobs: # <TEMPLATE-IGNORE>
           path: userpatches.repo
 
       - name: Checkout armbian-tools repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: jethome-ru/jethome-tools
           path: tools
