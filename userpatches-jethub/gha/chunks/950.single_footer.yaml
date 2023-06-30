@@ -21,7 +21,7 @@ jobs: # <TEMPLATE-IGNORE>
       # Cleaning releases
       - uses: dev-drprasad/delete-older-releases@v0.2.1
         with:
-          repo: armbian/os
+          repo: jethome-iot/armbian-os
           keep_latest: 3
           delete_tag_pattern: trunk
         env:
