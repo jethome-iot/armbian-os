@@ -19,7 +19,7 @@ jobs: # <TEMPLATE-IGNORE>
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
-        run: rm -rf userpatches.repo
+        run: sudo rm -rf userpatches.repo
 
       - name: Checkout build repo
         uses: actions/checkout@v3
@@ -57,7 +57,7 @@ jobs: # <TEMPLATE-IGNORE>
 
       - name: Cleanup leftover output
         run: |
-          rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
+          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
       - name: ${{matrix.desc}}
@@ -256,4 +256,4 @@ jobs: # <TEMPLATE-IGNORE>
 
       - name: "Cleanup output images"
         if: always()
-        run: rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images userpatches/VERSION
