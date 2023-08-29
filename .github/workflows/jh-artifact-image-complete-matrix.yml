@@ -357,7 +357,7 @@ jobs:
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
-        run: rm -rf userpatches.repo
+        run: sudo rm -rf userpatches.repo
 
       - name: Checkout build repo
         uses: actions/checkout@v3 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
@@ -383,7 +383,7 @@ jobs:
         run: |
           mkdir -pv userpatches
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
-          rm -rf userpatches.repo
+          sudo rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
 
@@ -428,7 +428,7 @@ jobs:
 
       - name: "Cleanup artefacts"
         if: always()
-        run: rm -rfv output/debs
+        run: sudo rm -rfv output/debs
 
 # template file: 650.per-chunk-images_job.yaml
 
@@ -450,7 +450,7 @@ jobs:
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
-        run: rm -rf userpatches.repo
+        run: sudo rm -rf userpatches.repo
 
       - name: Checkout build repo
         uses: actions/checkout@v3
@@ -482,13 +482,13 @@ jobs:
         run: |
           mkdir -pv userpatches
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
-          rm -rf userpatches.repo
+          sudo rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
 
       - name: Cleanup leftover output
         run: |
-          rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
+          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
       - name: ${{matrix.desc}}
@@ -615,7 +615,7 @@ jobs:
               exit 200
               ;;
           esac
-          rm -rf output/usr
+          sudo rm -rf output/usr
 
           IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
           echo IMGBURN: ${IMGBURN}
@@ -687,7 +687,7 @@ jobs:
 
       - name: "Cleanup output images"
         if: always()
-        run: rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images userpatches/VERSION
 
 # template file: 750.single_repo.yaml
 
@@ -724,7 +724,7 @@ jobs:
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
-        run: rm -rf userpatches.repo
+        run: sudo rm -rf userpatches.repo
 
       - name: Checkout build repo
         uses: actions/checkout@v3 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
@@ -750,13 +750,13 @@ jobs:
         run: |
           mkdir -pv userpatches
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
-          rm -rf userpatches.repo
+          sudo rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
       # Clean off output/info, if any
       - name: Cleanup output/info
         run: |
-          rm -rfv output/info
+          sudo rm -rfv output/info
           mkdir -pv output
 
       # Download the artifacts (output/info) produced by the prepare-matrix job.
