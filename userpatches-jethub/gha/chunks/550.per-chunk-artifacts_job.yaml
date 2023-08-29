@@ -25,7 +25,7 @@ jobs: # <TEMPLATE-IGNORE>
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
-        run: rm -rf userpatches.repo
+        run: sudo rm -rf userpatches.repo
 
       - name: Checkout build repo
         uses: actions/checkout@v3 # We don't need to clone git, really. A wget would suffice for GH-hosted runners. But using clone is better for Igor-hosted runners.
@@ -51,7 +51,7 @@ jobs: # <TEMPLATE-IGNORE>
         run: |
           mkdir -pv userpatches
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
-          rm -rf userpatches.repo
+          sudo rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
 
@@ -96,5 +96,5 @@ jobs: # <TEMPLATE-IGNORE>
 
       - name: "Cleanup artefacts"
         if: always()
-        run: rm -rfv output/debs
+        run: sudo rm -rfv output/debs
 
