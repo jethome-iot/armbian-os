@@ -439,8 +439,7 @@ jobs:
       - name: Build  ${{matrix.desc}}
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_ALL_BUILDS}}
-          # UPLOAD_TO_OCI_ONLY=yes
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes UPLOAD_TO_OCI_ONLY=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
