@@ -3,7 +3,7 @@ on: # <TEMPLATE-IGNORE>
 jobs: # <TEMPLATE-IGNORE>
   "TEMPLATE-JOB-NAME": # <TEMPLATE-JOB-NAME>
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 90
+    timeout-minutes: 180
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == '[[org]]' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-[[chunk]] == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -39,7 +39,7 @@ jobs: # <TEMPLATE-IGNORE>
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout armbian-tools repository
+      - name: Checkout jethome-tools repository
         uses: actions/checkout@v3
         with:
           repository: jethome-ru/jethome-tools
@@ -54,7 +54,6 @@ jobs: # <TEMPLATE-IGNORE>
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-
       - name: Cleanup leftover output
         run: |
           sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
@@ -63,7 +62,11 @@ jobs: # <TEMPLATE-IGNORE>
       - name: ${{matrix.desc}}
         id: build-one-image
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} SHARE_LOG=yes MAKE_FOLDERS="archive" IMAGE_VERSION=${{ needs.matrix_prep.outputs.version }} ${{env.EXTRA_PARAMS_IMAGE}} ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          # calculate loop from runner name
+          if [ -z "${ImageOS}" ]; then
+            USE_FIXED_LOOP_DEVICE=$(echo ${RUNNER_NAME} | rev | cut -d"-" -f1  | rev | sed 's/^0*//' | sed -e 's/^/\/dev\/loop/')
+          fi
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" USE_FIXED_LOOP_DEVICE="$USE_FIXED_LOOP_DEVICE" SHARE_LOG=yes MAKE_FOLDERS="archive" IMAGE_VERSION=${{ needs.matrix_prep.outputs.version }} ${{env.EXTRA_PARAMS_IMAGE}} ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build-one-image.outputs.logs_url }}"
         if: always()
@@ -85,12 +88,13 @@ jobs: # <TEMPLATE-IGNORE>
 
           # install dependencies
           if ! command -v "gh" > /dev/null 2>&1; then
-             type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
-             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-             && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-             && sudo apt update \
-             && sudo apt install gh -y
+             sudo apt-get -y -qq install gh
+             #type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+             #curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+             #&& sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+             #&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+             #&& sudo apt update \
+             #&& sudo apt install gh -y
           fi
 
           while true
@@ -123,7 +127,8 @@ jobs: # <TEMPLATE-IGNORE>
           GPG_PASSPHRASE1: ${{ secrets.GPG_PASSPHRASE1 }}
         if: env.GPG_PASSPHRASE1 != null
         run: |
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img.xz
+
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
 
       - name: "Upload artefacts"
         #if: ${{ github.repository_owner == 'Armbian' && github.event.inputs.release != 'stable' }}
