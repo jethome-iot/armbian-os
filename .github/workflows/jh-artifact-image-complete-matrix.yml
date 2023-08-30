@@ -5,7 +5,7 @@ name: "JH-new Build Artifacts and Images nightly"
 
 on:
   schedule:
-    - cron: 0 6 * * *
+   - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       skipImages:
@@ -19,9 +19,28 @@ on:
         required: true
         options: [ 'yes', 'no' ]
         type: choice
-        default: 'no'
+        default: 'yes'
       extraParamsAllBuilds:
         description: 'Extra params for all builds/jobs (prepare/artifact/image) (eg: DEBUG=yes)'
+        required: false
+        default: ''
+        type: string
+      board:
+        type: choice
+        description: 'Board'
+        options:
+        # boards
+        - all
+        default: 'all'
+      maintainer:
+        type: choice
+        description: 'Maintainer'
+        options:
+        # maintainers
+        - all
+        default: 'all'
+      targetsFilterInclude:
+        description: 'TARGETS_FILTER_INCLUDE, example: "BOARD:odroidhc4,BOARD:odroidn2"'
         required: false
         default: ''
         type: string
@@ -79,8 +98,8 @@ env:
   EXTRA_PARAMS_IMAGE: "COMPRESS_OUTPUTIMAGE=xz,sha SHOW_DEBIAN=yes SHARE_LOG=yes "
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: pipeline-nightly
+  cancel-in-progress: false
 
 jobs:
 
@@ -107,9 +126,10 @@ jobs:
         id: versionfile
         run: |
 
-          if [ "${{ github.event.inputs.nightlybuild }}" == "no" ]; then
-            echo "pre_release=false" >> $GITHUB_OUTPUT
+          if [ "${{ github.event.inputs.nightlybuild }}" == "no" || 'yes' }}" == "no" ]; then
             echo "file=stable" >> $GITHUB_OUTPUT
+            echo "pre_release=false" >> $GITHUB_OUTPUT
+            # TODO: fix repoupload to master 'armbian'
             echo "repoupload=armbian-test" >> $GITHUB_OUTPUT
             echo "TARGETS_FILENAME=targets-stable.yaml" >> $GITHUB_ENV
           else
@@ -131,24 +151,34 @@ jobs:
         run: |
           git add ${{ steps.versionfile.outputs.file }}-jethome.json
           git config --local user.email "dev@jethome.ru"
-          git config --local user.name "Armbianworker"
-          git commit --allow-empty -m "Update board list within actions" -a
+          git config --local user.name "JetHome Armbianworker"
+          git commit --allow-empty -m "Bump JetHome subversion within action" -a
 
       - name: Push changes
         if: ${{ github.event.inputs.skip_version_bump != 'true' }}
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          repository: jethome-iot/armbian-os
+          repository: jethome-iot/armbian-build
           branch: ${{ github.ref }}
 
-      - name: Read Version
-        #if: ${{ github.event.inputs.skipImages != 'yes' }}
+      - name: Read Version from file if nor overriden
+        if: ${{ ! github.event.inputs.versionOverride }}
         run: |
+          mkdir -p downloads
           SUBVER=$(cat "${{ steps.versionfile.outputs.file }}-jethome.json" | jq -r '.version')
           VER=$(cat "${{ steps.versionfile.outputs.file }}.json" | jq -r '.version')
           echo "VERSION_OVERRIDE=${VER}.jh.${SUBVER}"
           echo "VERSION_OVERRIDE=${VER}.jh.${SUBVER}" >> $GITHUB_ENV
+          echo ${VER}.jh.${SUBVER} > downloads/version
+
+      - name: 'Upload Artifact'
+ #       if: ${{ (github.event.inputs.skipImages || 'no') != 'yes' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: assets-for-download
+          path: downloads
+          retention-days: 5
 
       - name: Get version tag
         id: changelog
@@ -157,6 +187,7 @@ jobs:
           echo "tag=${{ env.VERSION_OVERRIDE }}">> $GITHUB_OUTPUT
 
       - name: "Generate body file"
+        if: ${{ (github.event.inputs.skipImages || 'no') != 'yes' }}
         run: |
             echo "
               <h1 align=center>JetHome Rolling releases</h1>
@@ -170,7 +201,7 @@ jobs:
               </p>" > body.html
 
       - uses: ncipollo/release-action@v1
-        if: ${{ (github.event.inputs.skipImages || 'yes') != 'yes' }}
+        if: ${{ (github.event.inputs.nightlybuild || 'yes') == 'yes' && (github.event.inputs.skipImages || 'no') != 'yes' }}
         with:
           tag: "${{ env.VERSION_OVERRIDE }}"
           name: "${{ env.VERSION_OVERRIDE }}"
@@ -261,9 +292,31 @@ jobs:
       - name: Prepare Info JSON and Matrices
         id: prepare-matrix
         run: |
+
+          FILTERS="${{ github.event.inputs.targetsFilterInclude }}"
+
+          if [ -z "${FILTERS}" ] && [ "${{ github.event.inputs.board }}" != "all" ] && [ -n "${{ github.event.inputs.board }}" ]; then
+              FILTERS='"BOARD:${{ github.event.inputs.board }}"'
+          fi
+
+          if [ -z "${FILTERS}" ] && [ "${{ github.event.inputs.maintainer }}" != "all" ] && [ -n "${{ github.event.inputs.board }}" ]; then
+              FILTERS='"BOARD_MAINTAINERS:${{ github.event.inputs.maintainer }}"'
+          fi
+
           # this sets outputs "artifact-matrix" #and "image-matrix"
           cd build
-          bash ./compile.sh gha-matrix jethome-images  BETA=${{ github.event.inputs.nightlybuild || 'yes' }} CLEAN_INFO=yes CLEAN_MATRIX=yes MATRIX_ARTIFACT_CHUNKS=1 MATRIX_IMAGE_CHUNKS=1 CHECK_OCI=${{ github.event.inputs.checkOci  || 'yes' }} TARGETS_FILENAME=${{ env.TARGETS_FILENAME }} SKIP_IMAGES=${{ github.event.inputs.skipImages || 'yes' }} ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes #  IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
+          bash ./compile.sh gha-matrix jethome-images \
+          REVISION="${{ needs.version_prep.outputs.version }}" \
+          TARGETS_FILTER_INCLUDE="${FILTERS}" \
+          BETA=${{ github.event.inputs.nightlybuild || 'yes' }} \
+          CLEAN_INFO=yes \
+          CLEAN_MATRIX=yes \
+          MATRIX_ARTIFACT_CHUNKS=1 \
+          MATRIX_IMAGE_CHUNKS=1 \
+          CHECK_OCI=${{ github.event.inputs.checkOci || 'yes' }} \
+          TARGETS_FILENAME=${{ env.TARGETS_FILENAME }} \
+          SKIP_IMAGES=${{ github.event.inputs.skipImages || 'no' }} \
+          ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes # IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
 
       - name: "Logs: ${{ steps.prepare-matrix.outputs.logs_url }}"
         if: always()
@@ -390,51 +443,52 @@ jobs:
       - name: Build  ${{matrix.desc}}
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}"SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}} ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          # UPLOAD_TO_OCI_ONLY=yes
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
         run: |
           echo "Logs: ${{ steps.build.outputs.logs_url }}"
 
-      - name: Check API rate limits
-        run: |
+#      - name: Check API rate limits
+#        run: |
 
-          # install dependencies
-          if ! command -v "gh" > /dev/null 2>&1; then
-             type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
-             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-             && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-             && sudo apt update \
-             && sudo apt install gh -y
-          fi
+#          # install dependencies
+#          if ! command -v "gh" > /dev/null 2>&1; then
+#             type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+#             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+#             && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+#             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+#             && sudo apt update \
+#             && sudo apt install gh -y
+#          fi
 
-          while true
-            do
-            API_CALLS_TOTAL=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /rate_limit | jq -r '.rate.limit')
-            API_CALLS_LEFT=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /rate_limit | jq -r '.rate.remaining')
-            PERCENT=$(( API_CALLS_LEFT * 100 / API_CALLS_TOTAL ))
-            if (( $PERCENT > 30 )); then
-                echo "API rate in good shape $PERCENT % free"
-                exit 0
-            fi
-            echo "API rate lower then 30%, sleping 10m"
-            sleep 10m
-          done
-
-          # show current api rate
-          curl -s -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/rate_limit
-
-      - name: "Cleanup artefacts"
-        if: always()
-        run: sudo rm -rfv output/debs
+#          while true
+#            do
+#            API_CALLS_TOTAL=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /rate_limit | jq -r '.rate.limit')
+#            API_CALLS_LEFT=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /rate_limit | jq -r '.rate.remaining')
+#            PERCENT=$(( API_CALLS_LEFT * 100 / API_CALLS_TOTAL ))
+#            if (( $PERCENT > 30 )); then
+#                echo "API rate in good shape $PERCENT % free"
+#                exit 0
+#            fi
+#            echo "API rate lower then 30%, sleping 10m"
+#            sleep 10m
+#          done
+#
+#          # show current api rate
+#          curl -s -H "Accept: application/vnd.github.v3+json" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/rate_limit
+#
+#      - name: "Cleanup artefacts"
+#        if: always()
+#        run: sudo rm -rfv output/debs
 
 # template file: 650.per-chunk-images_job.yaml
 
   "build-images-chunk-1": # templated "build-images-chunk-1"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 90
+    timeout-minutes: 180
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-1 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -470,8 +524,8 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout armbian-tools repository
-        uses: actions/checkout@v2
+      - name: Checkout jethome-tools repository
+        uses: actions/checkout@v3
         with:
           repository: jethome-ru/jethome-tools
           path: tools
@@ -482,9 +536,8 @@ jobs:
         run: |
           mkdir -pv userpatches
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
-          sudo rm -rf userpatches.repo
+          rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
-
 
       - name: Cleanup leftover output
         run: |
@@ -494,7 +547,11 @@ jobs:
       - name: ${{matrix.desc}}
         id: build-one-image
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} SHARE_LOG=yes MAKE_FOLDERS="archive" IMAGE_VERSION=${{ needs.matrix_prep.outputs.version }} ${{env.EXTRA_PARAMS_IMAGE}} ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          # calculate loop from runner name
+          if [ -z "${ImageOS}" ]; then
+            USE_FIXED_LOOP_DEVICE=$(echo ${RUNNER_NAME} | rev | cut -d"-" -f1  | rev | sed 's/^0*//' | sed -e 's/^/\/dev\/loop/')
+          fi
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" USE_FIXED_LOOP_DEVICE="$USE_FIXED_LOOP_DEVICE" SHARE_LOG=yes MAKE_FOLDERS="archive" IMAGE_VERSION=${{ needs.matrix_prep.outputs.version }} ${{env.EXTRA_PARAMS_IMAGE}} ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build-one-image.outputs.logs_url }}"
         if: always()
@@ -516,12 +573,13 @@ jobs:
 
           # install dependencies
           if ! command -v "gh" > /dev/null 2>&1; then
-             type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
-             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-             && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-             && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-             && sudo apt update \
-             && sudo apt install gh -y
+             sudo apt-get -y -qq install gh
+             #type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+             #curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+             #&& sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+             #&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+             #&& sudo apt update \
+             #&& sudo apt install gh -y
           fi
 
           while true
@@ -554,7 +612,8 @@ jobs:
           GPG_PASSPHRASE1: ${{ secrets.GPG_PASSPHRASE1 }}
         if: env.GPG_PASSPHRASE1 != null
         run: |
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img.xz
+
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
 
       - name: "Upload artefacts"
         #if: ${{ github.repository_owner == 'Armbian' && github.event.inputs.release != 'stable' }}
@@ -615,7 +674,7 @@ jobs:
               exit 200
               ;;
           esac
-          sudo rm -rf output/usr
+          rm -rf output/usr
 
           IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
           echo IMGBURN: ${IMGBURN}
@@ -695,8 +754,8 @@ jobs:
 
   publish-debs-to-repo:
     name: "publish debs to repo"
-    runs-on: [ "ubuntu-latest" ]
-    if: ${{ !failure() && !cancelled() }} # eg: run if dependencies worked. See https://github.com/orgs/community/discussions/45058#discussioncomment-4817378
+    runs-on: [ "self-hosted", "Linux" ]
+    if: ${{ !failure() && !cancelled() && (github.event.inputs.targetsFilterInclude == '') }} # eg: run if dependencies worked. See https://github.com/orgs/community/discussions/45058#discussioncomment-4817378
     needs: [ "version_prep", "matrix_prep", "all-artifacts-ready" ]
     steps:
 
@@ -774,15 +833,15 @@ jobs:
       - name: Download the debs
         id: download-debs
         run: |
-          bash ./compile.sh debs-to-repo-download BETA=${{ github.event.inputs.nightlybuild || 'yes' }} SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh debs-to-repo-download REVISION="${{ needs.matrix_prep.outputs.version }}" BETA=${{ github.event.inputs.nightlybuild || 'yes' }} SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs debs-to-repo-download: ${{ steps.download-debs.outputs.logs_url }}"
         run: |
           echo "Logs debs-to-repo-download: ${{ steps.download-debs.outputs.logs_url }}"
 
-      - name: Import GPG key from GitHub secrets
+      - name: Import GPG key
         id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@72b6676b71ab476b77e676928516f6982eef7a41 # v5.3.0 # https://github.com/crazy-max/ghaction-import-gpg/releases
+        uses: crazy-max/ghaction-import-gpg@v5
         with:
           gpg_private_key: ${{ secrets.GPG_KEY1 }}
           passphrase: ${{ secrets.GPG_PASSPHRASE1 }}
@@ -827,34 +886,42 @@ jobs:
     if: ${{ !failure() && !cancelled() }}
     needs: [ "matrix_prep", "all-artifacts-ready", "all-images-ready" ]
     steps:
+      - name: "Download all workflow run artifacts"
+        if: ${{ (github.event.inputs.skipImages || 'no') != 'yes' }}
+        uses: actions/download-artifact@v3
+        with:
+          name: assets-for-download
+          path: downloads
 
-      # Cleaning releases
-      #- name: "Keep only 7 releases"
-      #  uses: Vucko130/delete-older-releases@v0.2.2
-      #  with:
-      #    keep_latest: 7
-      #  env:
-      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Read version"
+        run: |
+
+          echo "version=$(cat downloads/version 2>/dev/null || true)" >> $GITHUB_ENV
+
+      # Delete artifact
+      - uses: geekyeggo/delete-artifact@v2
+        with:
+          name: assets-for-download
+          failOnError: false
 
       # Cleaning releases
       - uses: dev-drprasad/delete-older-releases@v0.2.1
         with:
           repo: jethome-iot/armbian-os
-          keep_latest: 3
-          delete_tag_pattern: trunk
+          keep_latest: 16
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Cleaning logs
-      - name: "Keep only 7 days of workflow logs"
+      - name: "Keep only 14 days of workflow logs"
         uses: igorjs/gh-actions-clean-workflow@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          days_old: 7
+          days_old: 14
 
       # Switch pre-release to release
       - uses: ncipollo/release-action@v1
-        if: ${{ (github.event.inputs.skipImages || 'yes') != 'yes' }}
+        if: ${{ (github.event.inputs.skipImages || 'no') != 'yes' && (github.event.inputs.nightlybuild || 'yes') == 'yes' }}
         with:
           tag: "${{ needs.matrix_prep.outputs.version }}"
           omitBody: true
