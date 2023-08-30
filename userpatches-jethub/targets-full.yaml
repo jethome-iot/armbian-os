@@ -6,15 +6,11 @@ common-gha-configs:
         kernel: [ "self-hosted", "Linux" ]
         uboot: [ "self-hosted", "Linux", "X64" ]
         armbian-bsp-cli: [ "ubuntu-latest" ]
-      #by-name-and-arch:
-      #  rootfs-armhf: [ "self-hosted", "Linux" ]
-      #  rootfs-arm64: [ "self-hosted", "Linux" ]
-      #  rootfs-amd64: [ "self-hosted", "Linux", "X64" ]
-      #  rootfs-riscv64: [ "self-hosted", "Linux", "X64" ]
-      #  image-armhf: [ ubuntu-latest ]
-      #  image-arm64: [ ubuntu-latest ]
-      #  image-amd64: [ ubuntu-latest ]
-      #  image-riscv64: [ ubuntu-latest ]
+      by-name-and-arch:
+        rootfs-arm64: [ "self-hosted", "Linux" ]
+        rootfs-amd64: [ "self-hosted", "Linux", "X64" ]
+        image-arm64: [ "self-hosted", "Linux", "X64" ]
+        image-amd64: [ "self-hosted", "Linux", "X64" ]
 
 lists:
 
@@ -35,6 +31,19 @@ targets:
       build-image: "yes"
     vars:
       RELEASE: sid
+      BUILD_MINIMAL: "no"
+      BUILD_DESKTOP: "no"
+    items:
+      - *headless
+
+  full-cli-unstable-debian:
+    enabled: yes
+    configs: [ jethome-images ]
+    pipeline:
+      gha: *armbian-gha
+      build-image: "yes"
+    vars:
+      RELEASE: trixie
       BUILD_MINIMAL: "no"
       BUILD_DESKTOP: "no"
     items:
