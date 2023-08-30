@@ -60,10 +60,6 @@ on:
         description: 'Version override. Leave empty for automatic bump'
         required: false
         default: ''
-      build_ref:
-        description: 'Build repo ref (branch, tag, sha1)'
-        required: false
-        default: 'main-jethub'
       skip_version_bump:
         description: 'Skip version bump? true = skip, false = bump'
         required: false
@@ -75,7 +71,7 @@ env:
 
   # For easier reuse across the multiple chunks ('armbian/build' repo)
   BUILD_REPOSITORY: "jethome-iot/armbian-build"
-  BUILD_REF: "${{ github.event.inputs.build_ref || 'main-jethub' }}" # branch or tag or sha1
+  BUILD_REF: "main-jethub" # branch or tag or sha1
 
   # For easier reuse across the multiple chunks ('armbian/os' repo)
   USERPATCHES_REPOSITORY: "jethome-iot/armbian-os"
@@ -126,7 +122,7 @@ jobs:
         id: versionfile
         run: |
 
-          if [ "${{ github.event.inputs.nightlybuild }}" == "no" || 'yes' }}" == "no" ]; then
+          if [ 'yes' == "no" ]; then
             echo "file=stable" >> $GITHUB_OUTPUT
             echo "pre_release=false" >> $GITHUB_OUTPUT
             # TODO: fix repoupload to master 'armbian'
@@ -159,7 +155,7 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          repository: jethome-iot/armbian-build
+          repository: ${{ github.repository }}
           branch: ${{ github.ref }}
 
       - name: Read Version from file if nor overriden
