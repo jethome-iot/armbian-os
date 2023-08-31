@@ -639,6 +639,10 @@ jobs:
              sudo apt update \
              && sudo apt install device-tree-compiler -y
           fi
+          if ! command -v "cc" > /dev/null 2>&1; then
+             sudo apt update \
+             && sudo apt install build-essential -y
+          fi
 
           UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
           IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
