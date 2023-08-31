@@ -91,7 +91,6 @@ env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   OCI_TARGET_BASE: "ghcr.io/jethome-iot/armbian-os/"
-  PREFER_DOCKER: "yes"
   # Added to every image build arguments.
   EXTRA_PARAMS_IMAGE: "COMPRESS_OUTPUTIMAGE=xz,pgp,sha SHOW_DEBIAN=yes SHARE_LOG=yes "
 
