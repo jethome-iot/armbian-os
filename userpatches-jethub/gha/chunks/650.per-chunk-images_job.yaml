@@ -202,6 +202,7 @@ jobs: # <TEMPLATE-IGNORE>
 
           IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
           echo IMGBURN: ${IMGBURN}
+          [[ -z "${IMGBURN}" ]] && exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
