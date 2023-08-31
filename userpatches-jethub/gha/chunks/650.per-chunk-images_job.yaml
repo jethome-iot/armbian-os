@@ -161,7 +161,11 @@ jobs: # <TEMPLATE-IGNORE>
           fi
           if ! command -v "cc" > /dev/null 2>&1; then
              sudo apt update \
-             && sudo apt install build-essential -y
+             && sudo apt install build-essential cpp -y
+          fi
+          if ! command -v "zip" > /dev/null 2>&1; then
+             sudo apt update \
+             && sudo apt install zip -y
           fi
 
 
