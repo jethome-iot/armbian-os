@@ -129,10 +129,12 @@ jobs:
             # TODO: fix repoupload to master 'armbian'
             echo "repoupload=armbian-test" >> $GITHUB_OUTPUT
             echo "TARGETS_FILENAME=targets-stable.yaml" >> $GITHUB_ENV
+            echo "targets_filename=targets-stable.yaml" >> $GITHUB_OUTPUT
           else
             echo "file=nightly" >> $GITHUB_OUTPUT
             echo "pre_release=true" >> $GITHUB_OUTPUT
             echo "repoupload=armbian-beta" >> $GITHUB_OUTPUT
+            echo "targets_filename=targets-full.yaml" >> $GITHUB_OUTPUT
             echo "TARGETS_FILENAME=targets-full.yaml" >> $GITHUB_ENV
           fi
 
@@ -219,6 +221,7 @@ jobs:
       # not related to matrix
       version: ${{ steps.releases.outputs.version }}
       repoupload: ${{ steps.versionfile.outputs.repoupload }}
+      targets_filename: ${{ steps.versionfile.outputs.targets_filename }}
 
   matrix_prep:
     name: "JSON matrix: 1/1 :: 1 artifact chunks, 1 image chunks"
@@ -313,7 +316,7 @@ jobs:
           MATRIX_ARTIFACT_CHUNKS=1 \
           MATRIX_IMAGE_CHUNKS=1 \
           CHECK_OCI=${{ github.event.inputs.checkOci || 'yes' }} \
-          TARGETS_FILENAME=${{ env.TARGETS_FILENAME }} \
+          TARGETS_FILENAME=${{ needs.version_prep.outputs.targets_filename }} \
           SKIP_IMAGES=${{ github.event.inputs.skipImages || 'no' }} \
           ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes # IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
 
