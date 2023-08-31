@@ -90,6 +90,7 @@ env:
   EXTRA_PARAMS_IMAGE: "COMPRESS_OUTPUTIMAGE=xz,sha SHOW_DEBIAN=yes SHARE_LOG=yes "
 
   OCI_TARGET_BASE: "ghcr.io/jethome-iot/armbian-os/"
+  PREFER_DOCKER: "yes"
 
 concurrency:
   group: [[concurrency_group]]
