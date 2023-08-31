@@ -224,6 +224,8 @@ jobs:
     if: ${{ github.repository_owner == 'jethome-iot' }}
     needs: [ version_prep ]
     runs-on: [ "self-hosted", "Linux" ]
+    env:
+      OCI_TARGET_BASE: "ghcr.io/jethome-iot/armbian-os/"
     steps:
 
       # Cleaning self hosted runners
