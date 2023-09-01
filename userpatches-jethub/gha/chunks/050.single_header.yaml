@@ -120,16 +120,18 @@ jobs:
         id: versionfile
         run: |
           if [ "${{ github.event.inputs.nightlybuild || [[nightlybuildDefaults]] }}" == "no" ]; then
-              echo "file=stable" >> $GITHUB_OUTPUT
-              echo "pre_release=false" >> $GITHUB_OUTPUT
-              # TODO: fix repoupload to master 'armbian'
-              echo "repoupload=armbian-test" >> $GITHUB_OUTPUT
-              echo "TARGETS_FILENAME=targets-stable.yaml" >> $GITHUB_ENV
+            echo "file=stable" >> $GITHUB_OUTPUT
+            echo "pre_release=false" >> $GITHUB_OUTPUT
+            # TODO: fix repoupload to master 'armbian'
+            echo "repoupload=armbian-test" >> $GITHUB_OUTPUT
+            echo "TARGETS_FILENAME=targets-stable.yaml" >> $GITHUB_ENV
+            echo "targets_filename=targets-stable.yaml" >> $GITHUB_OUTPUT
           else
-              echo "file=nightly" >> $GITHUB_OUTPUT
-              echo "pre_release=true" >> $GITHUB_OUTPUT
-              echo "repoupload=armbian-beta" >> $GITHUB_OUTPUT
-              echo "TARGETS_FILENAME=targets-full.yaml" >> $GITHUB_ENV
+            echo "file=nightly" >> $GITHUB_OUTPUT
+            echo "pre_release=true" >> $GITHUB_OUTPUT
+            echo "repoupload=armbian-beta" >> $GITHUB_OUTPUT
+            echo "targets_filename=targets-full.yaml" >> $GITHUB_OUTPUT
+            echo "TARGETS_FILENAME=targets-full.yaml" >> $GITHUB_ENV
           fi
 
       - name: Bump jethome subversion
@@ -215,6 +217,7 @@ jobs:
       # not related to matrix
       version: ${{ steps.releases.outputs.version }}
       repoupload: ${{ steps.versionfile.outputs.repoupload }}
+      targets_filename: ${{ steps.versionfile.outputs.targets_filename }}
 
   matrix_prep:
     name: "JSON matrix: [[num_chunks_artifacts]]/[[num_chunks_images]] :: [[num_chunks_artifacts]] artifact chunks, [[num_chunks_images]] image chunks"
@@ -307,7 +310,7 @@ jobs:
           MATRIX_ARTIFACT_CHUNKS=[[num_chunks_artifacts]] \
           MATRIX_IMAGE_CHUNKS=[[num_chunks_images]] \
           CHECK_OCI=${{ github.event.inputs.checkOci || [[nightlybuildDefaults]] }} \
-          TARGETS_FILENAME=${{ env.TARGETS_FILENAME }} \
+          TARGETS_FILENAME=${{ needs.version_prep.outputs.targets_filename }} \
           SKIP_IMAGES=${{ github.event.inputs.skipImages || [[skipImagesDefaults]] }} \
           ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes # IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
 
