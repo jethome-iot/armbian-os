@@ -1,4 +1,4 @@
-name: JH Reset jethome version on version bump
+name: JH Reset jethome stable version on version bump
 
 on:
   workflow_dispatch:
