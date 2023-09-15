@@ -1,11 +1,10 @@
 
 # template file: 050.single_header.yaml
 
-name: "JH Build Artifacts and Images nightly"
+name: "JH Build Artifacts and Images Stable"
 
 on:
-  schedule:
-   - cron: '0 6 * * *'
+  
   workflow_dispatch:
     inputs:
       skipImages:
@@ -49,13 +48,13 @@ on:
         required: false
         options: [ 'yes', 'no' ]
         type: choice
-        default: 'yes'
+        default: 'no'
       uploadtoserver:
         description: 'CDN upload  github = releases, jethome = fw.jethome.ru'
         required: false
         options: [ 'github', 'jethome', 'both' ]
         type: choice
-        default: 'both'
+        default: 'github'
       versionOverride:
         description: 'Version override. Leave empty for automatic bump'
         required: false
@@ -71,7 +70,7 @@ env:
 
   # For easier reuse across the multiple chunks ('armbian/build' repo)
   BUILD_REPOSITORY: "jethome-iot/armbian-build"
-  BUILD_REF: "main-jethub" # branch or tag or sha1
+  BUILD_REF: "v23.08" # branch or tag or sha1
 
   # For easier reuse across the multiple chunks ('armbian/os' repo)
   USERPATCHES_REPOSITORY: "jethome-iot/armbian-os"
@@ -96,7 +95,7 @@ env:
   OCI_TARGET_BASE: "ghcr.io/jethome-iot/armbian-os/"
 
 concurrency:
-  group: pipeline-nightly
+  group: ${{ github.run_id }}-pipeline-stable
   cancel-in-progress: false
 
 jobs:
@@ -123,7 +122,7 @@ jobs:
       - name: Determine version
         id: versionfile
         run: |
-          if [ "${{ github.event.inputs.nightlybuild || 'yes' }}" == "no" ]; then
+          if [ "${{ github.event.inputs.nightlybuild || 'no' }}" == "no" ]; then
             echo "file=stable" >> $GITHUB_OUTPUT
             echo "pre_release=false" >> $GITHUB_OUTPUT
             # TODO: fix repoupload to master 'armbian'
@@ -200,7 +199,7 @@ jobs:
               </p>" > body.html
 
       - uses: ncipollo/release-action@v1
-        if: ${{ (github.event.inputs.nightlybuild || 'yes') == 'yes' && (github.event.inputs.skipImages || 'no') != 'yes' }}
+        if: ${{ (github.event.inputs.nightlybuild || 'no') == 'yes' && (github.event.inputs.skipImages || 'no') != 'yes' }}
         with:
           tag: "${{ env.VERSION_OVERRIDE }}"
           name: "${{ env.VERSION_OVERRIDE }}"
@@ -308,12 +307,12 @@ jobs:
           bash ./compile.sh gha-matrix jethome-images \
           REVISION="${{ needs.version_prep.outputs.version }}" \
           TARGETS_FILTER_INCLUDE="${FILTERS}" \
-          BETA=${{ github.event.inputs.nightlybuild || 'yes' }} \
+          BETA=${{ github.event.inputs.nightlybuild || 'no' }} \
           CLEAN_INFO=yes \
           CLEAN_MATRIX=yes \
           MATRIX_ARTIFACT_CHUNKS=1 \
           MATRIX_IMAGE_CHUNKS=1 \
-          CHECK_OCI=${{ github.event.inputs.checkOci || 'yes' }} \
+          CHECK_OCI=${{ github.event.inputs.checkOci || 'no' }} \
           TARGETS_FILENAME=${{ needs.version_prep.outputs.targets_filename }} \
           SKIP_IMAGES=${{ github.event.inputs.skipImages || 'no' }} \
           ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes # IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
@@ -857,7 +856,7 @@ jobs:
       - name: Download the debs
         id: download-debs
         run: |
-          bash ./compile.sh debs-to-repo-download REVISION="${{ needs.matrix_prep.outputs.version }}" BETA=${{ github.event.inputs.nightlybuild || 'yes' }} SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh debs-to-repo-download REVISION="${{ needs.matrix_prep.outputs.version }}" BETA=${{ github.event.inputs.nightlybuild || 'no' }} SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs debs-to-repo-download: ${{ steps.download-debs.outputs.logs_url }}"
         run: |
@@ -945,7 +944,7 @@ jobs:
 
       # Switch pre-release to release
       - uses: ncipollo/release-action@v1
-        if: ${{ (github.event.inputs.skipImages || 'no') != 'yes' && (github.event.inputs.nightlybuild || 'yes') == 'yes' }}
+        if: ${{ (github.event.inputs.skipImages || 'no') != 'yes' && (github.event.inputs.nightlybuild || 'no') == 'yes' }}
         with:
           tag: "${{ needs.matrix_prep.outputs.version }}"
           omitBody: true
