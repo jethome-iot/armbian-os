@@ -2,8 +2,8 @@ org: "jethome-iot" # can't be an expression, only string.
 
 # armbian/build coordinates
 org_and_build_repo: "jethome-iot/armbian-build"
-build_ref: "main"
-script_name: "JH-new Build Artifacts and Images Stable"
+build_ref: "v23.08"
+script_name: "JH Build Artifacts and Images Stable"
 repository_ref: "stable"
 concurrency_group: "${{ github.run_id }}-pipeline-stable"
 
@@ -11,7 +11,7 @@ concurrency_group: "${{ github.run_id }}-pipeline-stable"
 skipImagesDefaults: "'no'"
 checkOciDefaults: "'yes'"
 nightlybuildDefaults: "'no'"
-uploadtoserverDefaults: "'jethome'"
+uploadtoserverDefaults: "'github'"
 
 # armbian/os coordinates. set all to empty to not use userpatches.
 org_and_userpatches_repo: "jethome-iot/armbian-os"

@@ -130,23 +130,6 @@ jobs: # <TEMPLATE-IGNORE>
 
           echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
 
-      - name: "Upload artefacts"
-        #if: ${{ github.repository_owner == 'Armbian' && github.event.inputs.release != 'stable' }}
-        #if: ${{ inputs.release != 'stable' && github.event.inputs.uploadtoserver != 'yes' }}
-        if: ${{ github.event.inputs.uploadtoserver == 'github' || github.event.inputs.uploadtoserver == 'both' }}
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "output/images/*/*/Armbian_*.*"
-          tag: "${{ needs.matrix_prep.outputs.version }}"
-          omitBody: true
-          replacesArtifacts: true
-          omitName: true
-          makeLatest: false
-          omitPrereleaseDuringUpdate: true
-          allowUpdates: true
-          artifactErrorsFailBuild: false
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
         run: |
@@ -237,7 +220,38 @@ jobs: # <TEMPLATE-IGNORE>
         run: |
           echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes ${{ steps.convertburn.outputs.imageburn }}
 
+      - name: "Upload artefacts"
+        if: ${{ github.event.inputs.uploadtoserver == 'github' || github.event.inputs.uploadtoserver == 'both' }}
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "output/images/*/*/Armbian_*.*"
+          tag: "${{ needs.matrix_prep.outputs.version }}"
+          omitBody: true
+          replacesArtifacts: true
+          omitName: true
+          makeLatest: false
+          omitPrereleaseDuringUpdate: true
+          allowUpdates: true
+          artifactErrorsFailBuild: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Upload artefacts"
+        if: ${{ github.event.inputs.uploadtoserver == 'github' || github.event.inputs.uploadtoserver == 'both' }}
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "${{ steps.convertbutn.outputs.imageburn }}*"
+          tag: "${{ needs.matrix_prep.outputs.version }}"
+          omitBody: true
+          replacesArtifacts: true
+          omitName: true
+          makeLatest: false
+          omitPrereleaseDuringUpdate: true
+          allowUpdates: true
+          artifactErrorsFailBuild: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Deploy to fw.jethome.ru (sdcard)
+        if: ${{ github.event.inputs.uploadtoserver == 'both' || github.event.inputs.uploadtoserver == 'jethome' }}
         id: upload-sdcard
         uses: jethome-iot/actions/firmware-upload@master
         with:
@@ -254,6 +268,7 @@ jobs: # <TEMPLATE-IGNORE>
           FWUPLOAD: ${{ secrets.FWUPLOAD }}
 
       - name: Deploy to fw.jethome.ru (burn)
+        if: ${{ github.event.inputs.uploadtoserver == 'both' || github.event.inputs.uploadtoserver == 'jethome' }}
         id: upload-burn
         uses: jethome-iot/actions/firmware-upload@master
         with:
