@@ -36,19 +36,6 @@ targets:
     items:
       - *headless
 
-  full-cli-unstable-debian:
-    enabled: yes
-    configs: [ jethome-images ]
-    pipeline:
-      gha: *armbian-gha
-      build-image: "yes"
-    vars:
-      RELEASE: trixie
-      BUILD_MINIMAL: "no"
-      BUILD_DESKTOP: "no"
-    items:
-      - *headless
-
   full-cli-stable-debian:
     enabled: yes
     configs: [ jethome-images ]
