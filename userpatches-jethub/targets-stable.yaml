@@ -61,16 +61,3 @@ targets:
     items:
       - *headless
 
-  full-cli-release-ubuntu:
-    enabled: yes
-    configs: [ jethome-images ]
-    pipeline:
-      gha: *armbian-gha
-      build-image: "yes"
-    vars:
-      RELEASE: lunar
-      BUILD_MINIMAL: "no"
-      BUILD_DESKTOP: "no"
-    items:
-      - *headless
-
