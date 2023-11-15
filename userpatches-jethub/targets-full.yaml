@@ -36,14 +36,14 @@ targets:
     items:
       - *headless
 
-  full-cli-oldstable-debian:
+  full-cli-newstable-debian:
     enabled: yes
     configs: [ jethome-images ]
     pipeline:
       gha: *armbian-gha
       build-image: "yes"
     vars:
-      RELEASE: bullseye
+      RELEASE: trixie
       BUILD_MINIMAL: "no"
       BUILD_DESKTOP: "no"
     items:
