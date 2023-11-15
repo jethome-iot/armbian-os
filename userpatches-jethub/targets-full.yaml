@@ -23,19 +23,6 @@ lists:
 
 targets:
 
-  full-cli-testing-debian:
-    enabled: yes
-    configs: [ jethome-images ]
-    pipeline:
-      gha: *armbian-gha
-      build-image: "yes"
-    vars:
-      RELEASE: sid
-      BUILD_MINIMAL: "no"
-      BUILD_DESKTOP: "no"
-    items:
-      - *headless
-
   full-cli-stable-debian:
     enabled: yes
     configs: [ jethome-images ]
@@ -70,19 +57,6 @@ targets:
       build-image: "yes"
     vars:
       RELEASE: jammy
-      BUILD_MINIMAL: "no"
-      BUILD_DESKTOP: "no"
-    items:
-      - *headless
-
-  full-cli-release-ubuntu:
-    enabled: yes
-    configs: [ jethome-images ]
-    pipeline:
-      gha: *armbian-gha
-      build-image: "yes"
-    vars:
-      RELEASE: lunar
       BUILD_MINIMAL: "no"
       BUILD_DESKTOP: "no"
     items:
