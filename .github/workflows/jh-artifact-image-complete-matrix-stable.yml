@@ -70,7 +70,7 @@ env:
 
   # For easier reuse across the multiple chunks ('armbian/build' repo)
   BUILD_REPOSITORY: "jethome-iot/armbian-build"
-  BUILD_REF: "v23.08" # branch or tag or sha1
+  BUILD_REF: "v23.11" # branch or tag or sha1
 
   # For easier reuse across the multiple chunks ('armbian/os' repo)
   USERPATCHES_REPOSITORY: "jethome-iot/armbian-os"
