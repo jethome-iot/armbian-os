@@ -2,9 +2,8 @@ org: "jethome-iot" # can't be an expression, only string.
 
 # armbian/build coordinates
 org_and_build_repo: "jethome-iot/armbian-build"
-build_ref: "v23.08"
+build_ref: "v23.11"
 script_name: "JH Build Artifacts and Images Stable"
-repository_ref: "stable"
 concurrency_group: "${{ github.run_id }}-pipeline-stable"
 
 # menu defaults
