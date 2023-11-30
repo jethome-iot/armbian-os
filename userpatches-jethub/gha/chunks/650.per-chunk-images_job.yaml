@@ -239,7 +239,7 @@ jobs: # <TEMPLATE-IGNORE>
         if: ${{ github.event.inputs.uploadtoserver == 'github' || github.event.inputs.uploadtoserver == 'both' }}
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "${{ steps.convertbutn.outputs.imageburn }}*"
+          artifacts: "${{ steps.convertburn.outputs.imageburn }}*"
           tag: "${{ needs.matrix_prep.outputs.version }}"
           omitBody: true
           replacesArtifacts: true
