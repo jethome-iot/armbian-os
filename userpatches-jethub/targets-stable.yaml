@@ -17,8 +17,10 @@ lists:
 
   headless: &headless
 
-    - { BOARD: jethubj100, BRANCH: current, edge }
-    - { BOARD: jethubj80, BRANCH: current, edge }
+    - { BOARD: jethubj100, BRANCH: current }
+    - { BOARD: jethubj80, BRANCH: current }
+    - { BOARD: jethubj100, BRANCH: edge }
+    - { BOARD: jethubj80, BRANCH: edge }
 
 targets:
 
