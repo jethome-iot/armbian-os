@@ -14,17 +14,16 @@ on:
         options: [ 'yes', 'no' ]
         type: choice
         default: 'no'
-      checkOci:
-        description: 'Check OCI for existing artifacts? yes = check OCI, no = always build everything'
-        required: true
-        options: [ 'yes', 'no' ]
-        type: choice
-        default: 'yes'
       extraParamsAllBuilds:
         description: 'Extra params for all builds/jobs (prepare/artifact/image) (eg: DEBUG=yes)'
         required: false
         default: ''
         type: string
+      ref:                      # commit id
+        required: false
+        description: 'Framework build ref (commit/tag/branch)'
+        type: string
+        default: 'main-jethub'
       board:
         type: choice
         description: 'Board'
@@ -71,7 +70,7 @@ env:
 
   # For easier reuse across the multiple chunks ('armbian/build' repo)
   BUILD_REPOSITORY: "jethome-iot/armbian-build"
-  BUILD_REF: "main-jethub" # branch or tag or sha1
+  BUILD_REF: "${{ inputs.ref || 'main-jethub' }}" # branch or tag or sha1
 
   # For easier reuse across the multiple chunks ('armbian/os' repo)
   USERPATCHES_REPOSITORY: "jethome-iot/armbian-os"
@@ -173,7 +172,7 @@ jobs:
 
       - name: 'Upload Artifact'
  #       if: ${{ (github.event.inputs.skipImages || 'no') != 'yes' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: assets-for-download
           path: downloads
@@ -272,7 +271,7 @@ jobs:
 
       - name: GitHub cache
         id: cache-restore
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             cache/memoize
@@ -283,11 +282,11 @@ jobs:
 
       # Login to ghcr.io, we're gonna do a lot of OCI lookups.
       - name: Docker Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: "${{ github.repository_owner }}" # GitHub username or org
-          password: ${{ secrets.GITHUB_TOKEN }}    # GitHub actions builtin token. repo has to have pkg access.
+          password: ${{ secrets.GITHUB_TOKEN }}  # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Prepare Info JSON and Matrices
         id: prepare-matrix
@@ -313,7 +312,7 @@ jobs:
           CLEAN_MATRIX=yes \
           MATRIX_ARTIFACT_CHUNKS=1 \
           MATRIX_IMAGE_CHUNKS=1 \
-          CHECK_OCI=${{ github.event.inputs.checkOci || 'yes' }} \
+          CHECK_OCI='yes' \
           TARGETS_FILENAME=${{ needs.version_prep.outputs.targets_filename }} \
           SKIP_IMAGES=${{ github.event.inputs.skipImages || 'no' }} \
           ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes # IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
@@ -324,7 +323,7 @@ jobs:
           echo "Logs: ${{ steps.prepare-matrix.outputs.logs_url }}"
 
       # Store output/info folder in a GitHub Actions artifact
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         name: Upload output/info as GitHub Artifact
         with:
           name: build-info-json
@@ -401,7 +400,7 @@ jobs:
 
       # Login to ghcr.io, for later uploading rootfs to ghcr.io
       - name: Docker Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: "${{ github.repository_owner }}" # GitHub username or org
