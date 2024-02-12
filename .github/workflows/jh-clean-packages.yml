@@ -1,6 +1,8 @@
-name: Clean Packages
+name: JH Clean Packages
 
 on:
+  schedule:
+   - cron: '0 */3 * * *'
   workflow_dispatch:
     inputs:
       skip_days:
@@ -56,33 +58,33 @@ jobs:
           # Name of the package.
           # Required
           package-name: ${{ matrix.packagename }}
-  
+
           # Type of the package. Can be one of container, maven, npm, nuget, or rubygems.
           # Required
           package-type: container
-  
+
           # The number of old versions to delete starting from the oldest version.
           # Defaults to 1.
           #num-old-versions-to-delete:
-  
+
           # The number of latest versions to keep.
           # This cannot be specified with `num-old-versions-to-delete`. By default, `min-versions-to-keep` takes precedence over `num-old-versions-to-delete`.
           # When set to 0, all deletable versions will be deleted.
           # When set greater than 0, all deletable package versions except the specified number will be deleted.
-          #min-versions-to-keep:
-  
+          min-versions-to-keep: 0
+
           # The package versions to exclude from deletion.
           # Takes regex for the version name as input.
           # By default nothing is ignored. This is ignored when `delete-only-pre-release-versions` is true
           #ignore-versions:
-  
+
           # If true it will delete only the pre-release versions.
           # The number of pre-release versions to keep can be set by using `min-versions-to-keep` value with this.
           # When `min-versions-to-keep` is 0, all pre-release versions get deleted.
           # Defaults to false.
           # Cannot be used with `num-old-versions-to-delete` and `ignore-versions`.
           #delete-only-pre-release-versions:
-  
+
           # If true it will delete only the untagged versions in case of container package.
           # Does not work for other package types and will be ignored.
           # The number of untagged versions to keep can be set by using `min-versions-to-keep` value with this.
@@ -90,7 +92,7 @@ jobs:
           # Defaults to false.
           # Cannot be used with `num-old-versions-to-delete`.
           #delete-only-untagged-versions:
-  
+
           # The token used to authenticate with GitHub Packages.
           # Defaults to github.token.
           # Required if the repo running the workflow does not have access to delete the package.
