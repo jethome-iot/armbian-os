@@ -11,9 +11,9 @@ jobs: # <TEMPLATE-IGNORE>
     steps:
       - name: "Download all workflow run artifacts"
         if: ${{ (github.event.inputs.skipImages || [[skipImagesDefaults]]) != 'yes' }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: assets-for-download
+          name: assets-for-download-[[repository_ref]]
           path: downloads
 
       - name: "Read version"
@@ -24,11 +24,11 @@ jobs: # <TEMPLATE-IGNORE>
       # Delete artifact
       - uses: geekyeggo/delete-artifact@v2
         with:
-          name: assets-for-download
+          name: assets-for-download-[[repository_ref]]
           failOnError: false
 
       # Cleaning releases
-      - uses: dev-drprasad/delete-older-releases@v0.2.1
+      - uses: dev-drprasad/delete-older-releases@v0.3.2
         with:
           repo: jethome-iot/armbian-os
           keep_latest: 16
@@ -37,7 +37,7 @@ jobs: # <TEMPLATE-IGNORE>
 
       # Cleaning logs
       - name: "Keep only 14 days of workflow logs"
-        uses: igorjs/gh-actions-clean-workflow@v3
+        uses: igorjs/gh-actions-clean-workflow@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           days_old: 14
@@ -46,6 +46,7 @@ jobs: # <TEMPLATE-IGNORE>
       - uses: ncipollo/release-action@v1
         if: ${{ (github.event.inputs.skipImages || [[skipImagesDefaults]]) != 'yes' && (github.event.inputs.nightlybuild || [[nightlybuildDefaults]]) == 'yes' }}
         with:
+          repo: "${{ env.RELEASE_REPOSITORY }}"
           tag: "${{ needs.matrix_prep.outputs.version }}"
           omitBody: true
           omitName: true
