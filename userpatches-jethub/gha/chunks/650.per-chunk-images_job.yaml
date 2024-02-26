@@ -41,7 +41,7 @@ jobs: # <TEMPLATE-IGNORE>
           path: userpatches.repo
 
       - name: Checkout jethome-tools repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: jethome-ru/jethome-tools
           path: tools
