@@ -4,6 +4,10 @@ on:
   [[cron_job]]
   workflow_dispatch:
     inputs:
+      ref:
+        description: 'Branch, tag, or SHA to build'
+        required: true
+        default: 'main-jethub'
       skipImages:
         description: 'Skip building images? no = build images, yes = skip images'
         required: true
@@ -28,18 +32,6 @@ on:
         # boards
         - all
         default: 'all'
-      maintainer:
-        type: choice
-        description: 'Maintainer'
-        options:
-        # maintainers
-        - all
-        default: 'all'
-      targetsFilterInclude:
-        description: 'TARGETS_FILTER_INCLUDE, example: "BOARD:odroidhc4,BOARD:odroidn2"'
-        required: false
-        default: ''
-        type: string
       nightlybuild:
         description: 'yes = nighlty, no = stable'
         required: false
@@ -67,24 +59,27 @@ env:
 
   # For easier reuse across the multiple chunks ('armbian/build' repo)
   BUILD_REPOSITORY: "[[org_and_build_repo]]"
-  BUILD_REF: "[[build_ref]]" # branch or tag or sha1
+  BUILD_REF: "${{ inputs.ref || inputs.branch || 'main-jethub' }}" # branch or tag or sha1
 
   # For easier reuse across the multiple chunks ('armbian/os' repo)
   USERPATCHES_REPOSITORY: "[[org_and_userpatches_repo]]"
   USERPATCHES_REF: "[[userpatches_ref]]" # branch or tag or sha1
   USERPATCHES_DIR: "[[userpatches_dir]]" # folder inside USERPATCHES_REPOSITORY
 
+  # Github repository for releases. Normally its the one where we executing script
+  RELEASE_REPOSITORY: "[[release_repo]]"
+
   # Armbian envs. Adjust to your needs.
   # This makes builds faster, but only if the Docker images are up-to-date with all dependencies, Python, tools, etc. Otherwise it makes it... slower.
   DOCKER_SKIP_UPDATE: "yes" # Do not apt update/install/requirements/etc during Dockerfile build, trust that Docker images are up-to-date.
 
   # Added to every build, even the prepare job.
-  EXTRA_PARAMS_ALL_BUILDS: "${{ github.event.inputs.extraParamsAllBuilds }}"
+  EXTRA_PARAMS_ALL_BUILDS: "${{ inputs.extraParamsAllBuilds || 'UPLOAD_TO_OCI_ONLY=yes' }}"
 
   VERSION_OVERRIDE: "${{ github.event.inputs.versionOverride }}"
 
   # To use GitHub CLI in a GitHub Actions workflow
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
   # Added to every image build arguments.
   EXTRA_PARAMS_IMAGE: "SHOW_DEBIAN=yes SHARE_LOG=yes "
@@ -102,13 +97,9 @@ jobs:
     runs-on: [ "ubuntu-latest" ]
     steps:
 
-      # Cleaning self hosted runners
-      #- name: Runner clean
-      #  uses: armbian/actions/runner-clean@main
-
       # Clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -121,6 +112,7 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.nightlybuild || [[nightlybuildDefaults]] }}" == "no" ]; then
             echo "file=stable" >> $GITHUB_OUTPUT
+            echo "skip_tag=true" >> $GITHUB_OUTPUT
             echo "pre_release=false" >> $GITHUB_OUTPUT
             # TODO: fix repoupload to master 'armbian'
             echo "repoupload=armbian-test" >> $GITHUB_OUTPUT
@@ -146,7 +138,7 @@ jobs:
         run: |
           git add ${{ steps.versionfile.outputs.file }}-jethome.json
           git config --local user.email "dev@jethome.ru"
-          git config --local user.name "JetHome Armbianworker"
+          git config --local user.name "JetHome Dev Bot"
           git commit --allow-empty -m "Bump JetHome subversion within action" -a
 
       - name: Push changes
@@ -169,9 +161,9 @@ jobs:
 
       - name: 'Upload Artifact'
  #       if: ${{ (github.event.inputs.skipImages || [[skipImagesDefaults]]) != 'yes' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: assets-for-download
+          name: assets-for-download-[[repository_ref]]
           path: downloads
           retention-days: 5
 
@@ -223,7 +215,7 @@ jobs:
     name: "JSON matrix: [[num_chunks_artifacts]]/[[num_chunks_images]] :: [[num_chunks_artifacts]] artifact chunks, [[num_chunks_images]] image chunks"
     if: ${{ github.repository_owner == '[[org]]' }}
     needs: [ version_prep ]
-    runs-on: [ "self-hosted", "Linux" ]
+    runs-on: [ "self-hosted", "Linux", "vm" ]
     steps:
 
       # Cleaning self hosted runners
@@ -232,7 +224,7 @@ jobs:
 
       # clone the build system repo (`armbian/build`)
       - name: Checkout build repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ env.BUILD_REPOSITORY }}
           ref: ${{ env.BUILD_REF }}
@@ -242,7 +234,7 @@ jobs:
 
       # clone the userpatches repo (`armbian/os`)
       - name: "Checkout userpatches repo: ${{env.USERPATCHES_REPOSITORY}}#${{env.USERPATCHES_REF}}"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         with:
           repository: ${{ env.USERPATCHES_REPOSITORY }}
@@ -268,7 +260,7 @@ jobs:
 
       - name: GitHub cache
         id: cache-restore
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             cache/memoize
@@ -279,11 +271,11 @@ jobs:
 
       # Login to ghcr.io, we're gonna do a lot of OCI lookups.
       - name: Docker Login to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: "[[ghcr_user]]" # GitHub username or org
-          password: ${{ secrets.GITHUB_TOKEN }}    # GitHub actions builtin token. repo has to have pkg access.
+          password: ${{ secrets.GITHUB_TOKEN }}  # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Prepare Info JSON and Matrices
         id: prepare-matrix
@@ -295,12 +287,9 @@ jobs:
               FILTERS='"BOARD:${{ github.event.inputs.board }}"'
           fi
 
-          if [ -z "${FILTERS}" ] && [ "${{ github.event.inputs.maintainer }}" != "all" ] && [ -n "${{ github.event.inputs.board }}" ]; then
-              FILTERS='"BOARD_MAINTAINERS:${{ github.event.inputs.maintainer }}"'
-          fi
-
           # this sets outputs "artifact-matrix" #and "image-matrix"
           cd build
+          # was TARGETS_FILENAME=${{ needs.version_prep.outputs.targets_filename }}
           bash ./compile.sh gha-matrix [[userpatches_config_for_prepare_job]] \
           REVISION="${{ needs.version_prep.outputs.version }}" \
           TARGETS_FILTER_INCLUDE="${FILTERS}" \
@@ -310,8 +299,8 @@ jobs:
           MATRIX_ARTIFACT_CHUNKS=[[num_chunks_artifacts]] \
           MATRIX_IMAGE_CHUNKS=[[num_chunks_images]] \
           CHECK_OCI=${{ github.event.inputs.checkOci || [[nightlybuildDefaults]] }} \
-          TARGETS_FILENAME=${{ needs.version_prep.outputs.targets_filename }} \
-          SKIP_IMAGES=${{ github.event.inputs.skipImages || [[skipImagesDefaults]] }} \
+          TARGETS_FILENAME="[[ targets_filename ]]" \
+          SKIP_IMAGES=${{ github.event.inputs.skipImages || [[skipImagesDefaults]]}} \
           ${{env.EXTRA_PARAMS_ALL_BUILDS}} SHARE_LOG=yes # IMAGES_ONLY_OUTDATED_ARTIFACTS=yes
 
       - name: "Logs: ${{ steps.prepare-matrix.outputs.logs_url }}"
@@ -320,7 +309,7 @@ jobs:
           echo "Logs: ${{ steps.prepare-matrix.outputs.logs_url }}"
 
       # Store output/info folder in a GitHub Actions artifact
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         name: Upload output/info as GitHub Artifact
         with:
           name: build-info-json
