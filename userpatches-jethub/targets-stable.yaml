@@ -50,19 +50,6 @@ targets:
     items:
       - *headless
 
-  full-cli-oldstable-debian:
-    enabled: yes
-    configs: [ jethome-images ]
-    pipeline:
-      gha: *armbian-gha
-      build-image: "yes"
-    vars:
-      RELEASE: bullseye
-      BUILD_MINIMAL: "no"
-      BUILD_DESKTOP: "no"
-    items:
-      - *headless
-
   full-cli-stable-ubuntu:
     enabled: yes
     configs: [ jethome-images ]
@@ -76,3 +63,15 @@ targets:
     items:
       - *headless
 
+  full-cli-newstable-ubuntu:
+    enabled: yes
+    configs: [ jethome-images ]
+    pipeline:
+      gha: *armbian-gha
+      build-image: "yes"
+    vars:
+      RELEASE: noble
+      BUILD_MINIMAL: "no"
+      BUILD_DESKTOP: "no"
+    items:
+      - *headless
