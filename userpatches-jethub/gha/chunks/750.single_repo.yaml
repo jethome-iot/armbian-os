@@ -60,7 +60,7 @@ jobs: # <TEMPLATE-IGNORE>
         run: |
           mkdir -pv userpatches
           rsync -av userpatches.repo/${{env.USERPATCHES_DIR}}/. userpatches/
-          #sudo rm -rf userpatches.repo
+          #rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
       # Clean off output/info, if any
@@ -86,15 +86,16 @@ jobs: # <TEMPLATE-IGNORE>
         run: |
           bash ./compile.sh debs-to-repo-download REVISION="${{ needs.matrix_prep.outputs.version }}" BETA=${{ github.event.inputs.nightlybuild || [[nightlybuildDefaults]] }} SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
-      - name: "Logs debs-to-repo-download: ${{ steps.download-debs.outputs.logs_url }}"
-        run: |
-          echo "Logs debs-to-repo-download: ${{ steps.download-debs.outputs.logs_url }}"
-
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_KEY1 }}
           passphrase: ${{ secrets.GPG_PASSPHRASE1 }}
+
+      - name: "Logs debs-to-repo-download: ${{ steps.download-debs.outputs.logs_url }}"
+        run: |
+          echo "Logs debs-to-repo-download: ${{ steps.download-debs.outputs.logs_url }}"
+
 
       - name: Show GPG user IDs
         run: |
