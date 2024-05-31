@@ -66,7 +66,7 @@ jobs: # <TEMPLATE-IGNORE>
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
-            USE_FIXED_LOOP_DEVICE=$(echo ${RUNNER_NAME} | rev | cut -d"-" -f1  | rev | sed 's/^0*//' | sed -e 's/^/\/dev\/loop/')
+          #  USE_FIXED_LOOP_DEVICE=$(echo ${RUNNER_NAME} | rev | cut -d"-" -f1  | rev | sed 's/^0*//' | sed -e 's/^/\/dev\/loop/')
           fi
           bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" USE_FIXED_LOOP_DEVICE="$USE_FIXED_LOOP_DEVICE" SHARE_LOG=yes MAKE_FOLDERS="archive" IMAGE_VERSION=${{ needs.matrix_prep.outputs.version }} ${{env.EXTRA_PARAMS_IMAGE}} ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
@@ -91,12 +91,6 @@ jobs: # <TEMPLATE-IGNORE>
           # install dependencies
           if ! command -v "gh" > /dev/null 2>&1; then
              sudo apt-get -y -qq install gh
-             #type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
-             #curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-             #&& sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-             #&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-             #&& sudo apt update \
-             #&& sudo apt install gh -y
           fi
 
           while true
@@ -104,11 +98,11 @@ jobs: # <TEMPLATE-IGNORE>
             API_CALLS_TOTAL=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /rate_limit | jq -r '.rate.limit')
             API_CALLS_LEFT=$(gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" /rate_limit | jq -r '.rate.remaining')
             PERCENT=$(( API_CALLS_LEFT * 100 / API_CALLS_TOTAL ))
-            if (( $PERCENT > 30 )); then
+            if (( $PERCENT > 20 )); then
                 echo "API rate in good shape $PERCENT % free"
                 exit 0
             fi
-            echo "API rate lower then 30%, sleping 10m"
+            echo "API rate lower then 20%, sleping 10m"
             sleep 10m
           done
 
@@ -236,7 +230,7 @@ jobs: # <TEMPLATE-IGNORE>
           omitPrereleaseDuringUpdate: true
           allowUpdates: true
           artifactErrorsFailBuild: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: "${{ env.GH_TOKEN }}"
 
       - name: "Upload artefacts"
         if: ${{ github.event.inputs.uploadtoserver == 'github' || github.event.inputs.uploadtoserver == 'both' }}
@@ -252,7 +246,7 @@ jobs: # <TEMPLATE-IGNORE>
           omitPrereleaseDuringUpdate: true
           allowUpdates: true
           artifactErrorsFailBuild: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: "${{ env.GH_TOKEN }}"
 
       - name: Deploy to fw.jethome.ru (sdcard)
         if: ${{ github.event.inputs.uploadtoserver == 'both' || github.event.inputs.uploadtoserver == 'jethome' }}
@@ -288,6 +282,6 @@ jobs: # <TEMPLATE-IGNORE>
           supported_devices: "${{ steps.convertburn.outputs.supported }}"
           FWUPLOAD: ${{ secrets.FWUPLOAD }}
 
-      - name: "Cleanup output images"
+      - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
         run: sudo rm -rfv output/images userpatches/VERSION
