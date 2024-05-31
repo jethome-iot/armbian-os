@@ -22,24 +22,24 @@ jobs: # <TEMPLATE-IGNORE>
           echo "version=$(cat downloads/version 2>/dev/null || true)" >> $GITHUB_ENV
 
       # Delete artifact
-      - uses: geekyeggo/delete-artifact@v2
+      - uses: geekyeggo/delete-artifact@v5
         with:
           name: assets-for-download-[[repository_ref]]
           failOnError: false
 
       # Cleaning releases
-      - uses: dev-drprasad/delete-older-releases@v0.3.2
+      - uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
           repo: jethome-iot/armbian-os
           keep_latest: 16
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ env.GH_TOKEN }}
 
       # Cleaning logs
       - name: "Keep only 14 days of workflow logs"
-        uses: igorjs/gh-actions-clean-workflow@v4
+        uses: igorjs/gh-actions-clean-workflow@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ env.GH_TOKEN }}
           days_old: 14
 
       # Switch pre-release to release
@@ -52,4 +52,4 @@ jobs: # <TEMPLATE-IGNORE>
           omitName: true
           allowUpdates: true
           makeLatest: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: "${{ env.GH_TOKEN }}"
