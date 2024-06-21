@@ -21,6 +21,7 @@ lists:
     - { BOARD: jethubj80, BRANCH: current }
     - { BOARD: jethubj100, BRANCH: edge }
     - { BOARD: jethubj80, BRANCH: edge }
+    - { BOARD: jethubj200, BRANCH: edge }
 
 targets:
 
