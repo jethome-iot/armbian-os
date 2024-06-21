@@ -2054,6 +2054,10 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
@@ -2337,6 +2341,10 @@ jobs:
             jethubj100)
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
+              ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
               ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
@@ -2622,6 +2630,10 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
@@ -2905,6 +2917,10 @@ jobs:
             jethubj100)
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
+              ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
               ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
@@ -3190,6 +3206,10 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
@@ -3473,6 +3493,10 @@ jobs:
             jethubj100)
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
+              ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
               ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
@@ -3758,6 +3782,10 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
@@ -4041,6 +4069,10 @@ jobs:
             jethubj100)
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
+              ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
               ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
@@ -4326,6 +4358,10 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
@@ -4609,6 +4645,10 @@ jobs:
             jethubj100)
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
+              ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
               ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
@@ -4894,6 +4934,10 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
@@ -5177,6 +5221,10 @@ jobs:
             jethubj100)
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
+              ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
               ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
@@ -5462,6 +5510,10 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
@@ -5746,6 +5798,10 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
@@ -6029,6 +6085,10 @@ jobs:
             jethubj100)
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
+              ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
               ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
