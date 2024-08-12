@@ -95,7 +95,11 @@ env:
   # Added to every image build arguments.
   EXTRA_PARAMS_IMAGE: "SHOW_DEBIAN=yes SHARE_LOG=yes "
 
-  OCI_TARGET_BASE: "ghcr.io/jethome-iot/armbian-os/"
+  #OCI_TARGET_BASE: "ghcr.io/jethome-iot/armbian-os/"
+  DOCKER_ARMBIAN_BASE_IMAGE: "ubuntu:noble"
+  DOCKERFILE_USE_ARMBIAN_IMAGE_AS_BASE: "no"
+  DOCKER_ARMBIAN_BASE_COORDINATE_PREFIX: "cr.jethome.work/armbian/docker-armbian-build:"
+  OCI_TARGET_BASE: "cr.jethome.work/armbian/"
 
 concurrency:
   group: ${{ github.run_id }}-pipeline-stable
@@ -1641,7 +1645,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -1653,12 +1657,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -1774,6 +1777,8 @@ jobs:
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -1929,7 +1934,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -1941,12 +1946,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -2053,11 +2057,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -2213,7 +2223,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -2225,12 +2235,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -2337,11 +2346,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -2497,7 +2512,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -2509,12 +2524,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -2621,11 +2635,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -2781,7 +2801,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -2793,12 +2813,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -2905,11 +2924,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -3065,7 +3090,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -3077,12 +3102,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -3189,11 +3213,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -3349,7 +3379,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -3361,12 +3391,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -3473,11 +3502,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -3633,7 +3668,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -3645,12 +3680,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -3757,11 +3791,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -3917,7 +3957,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -3929,12 +3969,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -4041,11 +4080,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -4201,7 +4246,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -4213,12 +4258,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -4325,11 +4369,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -4485,7 +4535,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -4497,12 +4547,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -4609,11 +4658,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -4769,7 +4824,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -4781,12 +4836,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -4893,11 +4947,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -5053,7 +5113,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -5065,12 +5125,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -5177,11 +5236,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -5337,7 +5402,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -5349,12 +5414,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -5461,11 +5525,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -5621,7 +5691,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -5633,12 +5703,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -5745,11 +5814,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
@@ -5905,7 +5980,7 @@ jobs:
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -5917,12 +5992,11 @@ jobs:
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 300
+        timeout-minutes: 120
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -6029,11 +6103,17 @@ jobs:
               ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
+            jethubj200)
+              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
+              SUPPORTED="D2"
+              ;;
             jethubj80)
               ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
