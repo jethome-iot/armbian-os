@@ -533,7 +533,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -605,7 +607,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -677,7 +681,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -749,7 +755,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -821,7 +829,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -893,7 +903,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -965,7 +977,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -1037,7 +1051,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -1109,7 +1125,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -1181,7 +1199,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -1253,7 +1273,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -1325,7 +1347,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -1397,7 +1421,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -1469,7 +1495,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -1541,7 +1569,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -1613,7 +1643,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
@@ -1685,7 +1717,9 @@ jobs:
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
       - name: Docker Login to CR
-        if: ${{ secrets.CR_REGISTRY != '' }}
+        env:
+          CR_REGISTRY: ${{ secrets.CR_REGISTRY }}
+        if: env.CR_REGISTRY != null
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.CR_REGISTRY }}
