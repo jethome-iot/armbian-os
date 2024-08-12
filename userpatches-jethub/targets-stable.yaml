@@ -21,7 +21,11 @@ lists:
     - { BOARD: jethubj80, BRANCH: current }
     - { BOARD: jethubj100, BRANCH: edge }
     - { BOARD: jethubj80, BRANCH: edge }
-    - { BOARD: jethubj200, BRANCH: edge }
+
+  fast-hdmi: &fast-hdmi
+    - { BOARD: jethubj200, BRANCH: current, ENABLE_EXTENSIONS: "mesa-vpu" }
+    - { BOARD: jethubj200, BRANCH: edge, ENABLE_EXTENSIONS: "mesa-vpu" }
+
 
 targets:
 
@@ -37,6 +41,7 @@ targets:
       BUILD_DESKTOP: "no"
     items:
       - *headless
+      - *fast-hdmi
 
   full-cli-stable-debian:
     enabled: yes
@@ -50,8 +55,9 @@ targets:
       BUILD_DESKTOP: "no"
     items:
       - *headless
+      - *fast-hdmi
 
-  full-cli-stable-ubuntu:
+  full-cli-oldstable-ubuntu:
     enabled: yes
     configs: [ jethome-images ]
     pipeline:
@@ -63,8 +69,9 @@ targets:
       BUILD_DESKTOP: "no"
     items:
       - *headless
+      - *fast-hdmi
 
-  full-cli-newstable-ubuntu:
+  full-cli-stable-ubuntu:
     enabled: yes
     configs: [ jethome-images ]
     pipeline:
@@ -76,3 +83,20 @@ targets:
       BUILD_DESKTOP: "no"
     items:
       - *headless
+      - *fast-hdmi
+
+  gnome-3d-desktop-lts-ubuntu:
+    enabled: yes
+    configs: [ jethome-images ]
+    pipeline:
+      gha: *armbian-gha
+      build-image: "yes"
+    vars:
+      RELEASE: noble
+      BUILD_MINIMAL: "no"
+      DESKTOP_ENVIRONMENT: "gnome"
+      BUILD_DESKTOP: "yes"
+      DESKTOP_ENVIRONMENT_CONFIG_NAME: "config_base"
+      DESKTOP_APPGROUPS_SELECTED: "browsers,chat,desktop_tools,editors,email,internet,languages,multimedia,office,programming,remote_desktop"
+    items:
+      - *fast-hdmi
