@@ -22,6 +22,14 @@ jobs: # <TEMPLATE-IGNORE>
           username: "[[ghcr_user]]" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
