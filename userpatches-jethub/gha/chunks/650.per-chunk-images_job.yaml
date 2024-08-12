@@ -45,7 +45,7 @@ jobs: # <TEMPLATE-IGNORE>
         with:
           repository: jethome-ru/jethome-tools
           path: tools
-          ref: convert
+          ref: convert_jhos
 
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -57,8 +57,7 @@ jobs: # <TEMPLATE-IGNORE>
 
       - name: Cleanup leftover output
         run: |
-          sudo rm -rfv output/images userpatches/VERSION output/debs output/debs-beta
-          echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
+          sudo rm -f userpatches/VERSION
 
       - name: ${{matrix.desc}}
         id: build-one-image
@@ -178,6 +177,8 @@ jobs: # <TEMPLATE-IGNORE>
               SUPPORTED="H1"
               ;;
             *)
+              echo "Unsupported board" ${BOARD}
+              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
