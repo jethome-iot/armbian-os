@@ -532,6 +532,14 @@ jobs:
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -595,6 +603,14 @@ jobs:
           registry: ghcr.io
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
+
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -660,6 +676,14 @@ jobs:
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -723,6 +747,14 @@ jobs:
           registry: ghcr.io
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
+
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -788,6 +820,14 @@ jobs:
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -851,6 +891,14 @@ jobs:
           registry: ghcr.io
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
+
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -916,6 +964,14 @@ jobs:
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -979,6 +1035,14 @@ jobs:
           registry: ghcr.io
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
+
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -1044,6 +1108,14 @@ jobs:
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -1107,6 +1179,14 @@ jobs:
           registry: ghcr.io
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
+
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -1172,6 +1252,14 @@ jobs:
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -1235,6 +1323,14 @@ jobs:
           registry: ghcr.io
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
+
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -1300,6 +1396,14 @@ jobs:
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -1363,6 +1467,14 @@ jobs:
           registry: ghcr.io
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
+
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -1428,6 +1540,14 @@ jobs:
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -1492,6 +1612,14 @@ jobs:
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
 
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
+
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
@@ -1555,6 +1683,14 @@ jobs:
           registry: ghcr.io
           username: "${{ github.repository_owner }}" # GitHub username or org
           password: "${{ secrets.GITHUB_TOKEN }}"    # GitHub actions builtin token. repo has to have pkg access.
+
+      - name: Docker Login to CR
+        if: ${{ secrets.CR_REGISTRY != '' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.CR_REGISTRY }}
+          username: ${{ secrets.CR_USERNAME }}
+          password: ${{ secrets.CR_PAT }}
 
       # cleanup the place where we will clone the userpatches repo, to avoid git going insane and cleaning everything later
       - name: Cleanup userpatches repo
@@ -1662,7 +1798,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -1951,7 +2087,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -2240,7 +2376,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -2529,7 +2665,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -2818,7 +2954,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -3107,7 +3243,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -3396,7 +3532,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -3685,7 +3821,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -3974,7 +4110,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -4263,7 +4399,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -4552,7 +4688,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -4841,7 +4977,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -5130,7 +5266,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -5419,7 +5555,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -5708,7 +5844,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
@@ -5997,7 +6133,7 @@ jobs:
 
       - name: ${{matrix.desc}}
         id: build-one-image
-        timeout-minutes: 120
+        timeout-minutes: 300
         run: |
           # calculate loop from runner name
           if [ -z "${ImageOS}" ]; then
