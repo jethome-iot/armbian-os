@@ -3,7 +3,7 @@ on: # <TEMPLATE-IGNORE>
 jobs: # <TEMPLATE-IGNORE>
   "TEMPLATE-JOB-NAME": # <TEMPLATE-JOB-NAME>
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == '[[org]]' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-[[chunk]] == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -55,7 +55,7 @@ jobs: # <TEMPLATE-IGNORE>
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -123,7 +123,7 @@ jobs: # <TEMPLATE-IGNORE>
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
