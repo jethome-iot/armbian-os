@@ -42,6 +42,9 @@ on:
         options:
         # boards
         - all
+        - jethubj100
+        - jethubj80
+        - jethubj200
         default: 'all'
       nightlybuild:
         description: 'yes = nighlty, no = stable'
@@ -56,7 +59,7 @@ on:
         type: choice
         default: 'github'
       versionOverride:
-        description: 'Version override. Leave empty for automatic bump'
+        description: 'Version override'
         required: false
         default: ''
       skip_version_bump:
@@ -165,7 +168,7 @@ jobs:
           branch: ${{ github.ref }}
 
       - name: Read version from file if nor overriden
-        if: ${{ ! github.event.inputs.versionOverride }}
+        if: ${{ ! github.event.inputs.versionOverride || "env.VERSION_BUMP" == "false" }}
         run: |
           mkdir -p downloads
           SUBVER=$(cat "${{ steps.versionfile.outputs.file }}-jethome.json" | jq -r '.version')
@@ -578,7 +581,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -652,7 +655,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -726,7 +729,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -800,7 +803,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -874,7 +877,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -948,7 +951,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1022,7 +1025,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1096,7 +1099,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1170,7 +1173,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1244,7 +1247,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1318,7 +1321,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1392,7 +1395,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1466,7 +1469,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1540,7 +1543,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1614,7 +1617,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1688,7 +1691,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1762,7 +1765,7 @@ jobs:
         timeout-minutes: 300
         id: build
         run: |
-          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
+          bash ./compile.sh ${{ matrix.invocation }} REVISION="${{ needs.matrix_prep.outputs.version }}" SHOW_DEBUG=yes SHARE_LOG=yes ${{env.EXTRA_PARAMS_ALL_BUILDS}}
 
       - name: "Logs: ${{ steps.build.outputs.logs_url }}"
         if: always()
@@ -1773,7 +1776,7 @@ jobs:
 
   "build-images-chunk-1": # templated "build-images-chunk-1"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-1 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -1825,7 +1828,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -1893,7 +1896,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -2062,7 +2065,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-2": # templated "build-images-chunk-2"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-2 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -2114,7 +2117,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -2182,7 +2185,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -2351,7 +2354,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-3": # templated "build-images-chunk-3"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-3 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -2403,7 +2406,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -2471,7 +2474,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -2640,7 +2643,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-4": # templated "build-images-chunk-4"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-4 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -2692,7 +2695,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -2760,7 +2763,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -2929,7 +2932,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-5": # templated "build-images-chunk-5"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-5 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -2981,7 +2984,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -3049,7 +3052,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -3218,7 +3221,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-6": # templated "build-images-chunk-6"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-6 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -3270,7 +3273,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -3338,7 +3341,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -3507,7 +3510,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-7": # templated "build-images-chunk-7"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-7 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -3559,7 +3562,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -3627,7 +3630,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -3796,7 +3799,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-8": # templated "build-images-chunk-8"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-8 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -3848,7 +3851,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -3916,7 +3919,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -4085,7 +4088,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-9": # templated "build-images-chunk-9"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-9 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -4137,7 +4140,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -4205,7 +4208,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -4374,7 +4377,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-10": # templated "build-images-chunk-10"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-10 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -4426,7 +4429,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -4494,7 +4497,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -4663,7 +4666,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-11": # templated "build-images-chunk-11"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-11 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -4715,7 +4718,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -4783,7 +4786,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -4952,7 +4955,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-12": # templated "build-images-chunk-12"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-12 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -5004,7 +5007,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -5072,7 +5075,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -5241,7 +5244,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-13": # templated "build-images-chunk-13"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-13 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -5293,7 +5296,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -5361,7 +5364,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -5530,7 +5533,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-14": # templated "build-images-chunk-14"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-14 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -5582,7 +5585,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -5650,7 +5653,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -5819,7 +5822,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-15": # templated "build-images-chunk-15"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-15 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -5871,7 +5874,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -5939,7 +5942,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -6108,7 +6111,7 @@ jobs:
         run: sudo rm -rfv output/images userpatches/VERSION
   "build-images-chunk-16": # templated "build-images-chunk-16"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
-    timeout-minutes: 180
+    timeout-minutes: 240
     if: ${{ !failure() && !cancelled() && ( github.repository_owner == 'jethome-iot' ) && ( needs.matrix_prep.outputs.images-chunk-not-empty-16 == 'yes' ) }} # <-- HERE: Chunk number.
     strategy:
       fail-fast: false # let other jobs try to complete if one fails
@@ -6160,7 +6163,7 @@ jobs:
           rm -rf userpatches.repo
           echo ${{ needs.matrix_prep.outputs.version }} > userpatches/VERSION
 
-      - name: Cleanup leftover output
+      - name: "Cleanup leftover output"
         run: |
           sudo rm -f userpatches/VERSION
 
@@ -6228,7 +6231,7 @@ jobs:
         if: env.GPG_PASSPHRASE1 != null
         run: |
 
-          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*.img*.xz
+          echo ${{ secrets.GPG_PASSPHRASE1 }} | gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes output/images/*/archive/*img.*.xz
 
       #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
       - name: Check filelist
@@ -6562,10 +6565,11 @@ jobs:
 
       # Cleaning logs
       - name: "Keep only 14 days of workflow logs"
-        uses: igorjs/gh-actions-clean-workflow@v5
+        uses: igorjs/gh-actions-clean-workflow@v6
         with:
-          token: ${{ env.GH_TOKEN }}
-          days_old: 14
+          token: "${{ env.GH_TOKEN }}"
+          runs_older_than: 14 # optional
+          runs_to_keep: 0 # optional
 
       # Switch pre-release to release
       - uses: ncipollo/release-action@v1
