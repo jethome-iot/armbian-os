@@ -27,7 +27,31 @@ jobs:
         type: 'minor'
         do: 'zero'
 
-    - name: Inc majom version
+    - name: Check version
+      id: checkversion
+      run: |
+        CURRENT_VERSION=$(jq -r '.version' stable.json)
+        CURRENT_HIGH_VERSION=$(echo "$CURRENT_VERSION" | cut -d'.' -f1 )
+        PREVIOUS_VERSION=$(git show HEAD~1:stable.json | jq -r '.version')
+        PREVIOUS_HIGH_VERSION=$(echo "$PREVIOUS_VERSION" | cut -d'.' -f1)
+
+        if [ "$CURRENT_HIGH_VERSION" != "$PREVIOUS_HIGH_VERSION" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Inc major version
+      if: steps.checkversion.outputs.changed == 'true'
+      uses: jethome-iot/actions/armbian-jethome-version@master
+      id: zeroversion
+      with:
+        file: 'stable-jethome.json'
+        type: 'major'
+        do: 'zero'
+
+    - name: Inc major version
+      if: steps.checkversion.outputs.changed != 'true'
       uses: jethome-iot/actions/armbian-jethome-version@master
       id: incversion
       with:
