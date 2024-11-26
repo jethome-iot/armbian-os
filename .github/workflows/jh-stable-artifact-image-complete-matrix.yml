@@ -168,7 +168,7 @@ jobs:
           branch: ${{ github.ref }}
 
       - name: Read version from file if nor overriden
-        if: ${{ ! github.event.inputs.versionOverride || "env.VERSION_BUMP" == "false" }}
+        if: ${{ ! github.event.inputs.versionOverride || env.VERSION_BUMP == 'false' }}
         run: |
           mkdir -p downloads
           SUBVER=$(cat "${{ steps.versionfile.outputs.file }}-jethome.json" | jq -r '.version')
