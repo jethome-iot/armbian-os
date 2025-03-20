@@ -3,9 +3,9 @@ common-gha-configs:
     runners:
       default: "ubuntu-latest" # or a ["tag", "list"]
       by-name:
-        kernel: [ "self-hosted", "arm64" ]
+        kernel: [ "ubuntu-24.04-arm" ]
         #uboot: [ "self-hosted", "Linux" ]
-        uboot: [ "self-hosted", "arm64" ]
+        uboot: [ "ubuntu-24.04-arm" ]
         armbian-bsp-cli: [ "ubuntu-24.04-arm" ]
       by-name-and-arch:
         rootfs-arm64: [ "self-hosted", "Linux" ]
