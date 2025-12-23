@@ -178,7 +178,7 @@ jobs:
           echo ${VER}.jh.${SUBVER} > downloads/version
 
       - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: assets-for-download-v25.11
           path: downloads
@@ -327,7 +327,7 @@ jobs:
           echo "Logs: ${{ steps.prepare-matrix.outputs.logs_url }}"
 
       # Store output/info folder in a GitHub Actions artifact
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         name: Upload output/info as GitHub Artifact
         with:
           name: build-info-json
