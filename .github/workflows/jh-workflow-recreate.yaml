@@ -28,6 +28,10 @@ jobs:
     name: "Recreate JH Workflows"
     if: ${{ github.repository_owner == 'jethome-iot' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      workflows: write
     steps:
       - name: Checkout armbian-build repository
         uses: actions/checkout@v6
