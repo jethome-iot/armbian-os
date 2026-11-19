@@ -1814,13 +1814,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -1904,63 +1897,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -1986,7 +1965,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -2063,7 +2042,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-2": # templated "build-images-chunk-2"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -2103,13 +2082,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -2193,63 +2165,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -2275,7 +2233,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -2352,7 +2310,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-3": # templated "build-images-chunk-3"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -2392,13 +2350,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -2482,63 +2433,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -2564,7 +2501,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -2641,7 +2578,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-4": # templated "build-images-chunk-4"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -2681,13 +2618,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -2771,63 +2701,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -2853,7 +2769,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -2930,7 +2846,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-5": # templated "build-images-chunk-5"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -2970,13 +2886,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -3060,63 +2969,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -3142,7 +3037,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -3219,7 +3114,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-6": # templated "build-images-chunk-6"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -3259,13 +3154,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -3349,63 +3237,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -3431,7 +3305,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -3508,7 +3382,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-7": # templated "build-images-chunk-7"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -3548,13 +3422,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -3638,63 +3505,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -3720,7 +3573,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -3797,7 +3650,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-8": # templated "build-images-chunk-8"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -3837,13 +3690,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -3927,63 +3773,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -4009,7 +3841,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -4086,7 +3918,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-9": # templated "build-images-chunk-9"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -4126,13 +3958,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -4216,63 +4041,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -4298,7 +4109,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -4375,7 +4186,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-10": # templated "build-images-chunk-10"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -4415,13 +4226,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -4505,63 +4309,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -4587,7 +4377,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -4664,7 +4454,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-11": # templated "build-images-chunk-11"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -4704,13 +4494,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -4794,63 +4577,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -4876,7 +4645,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -4953,7 +4722,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-12": # templated "build-images-chunk-12"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -4993,13 +4762,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -5083,63 +4845,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -5165,7 +4913,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -5242,7 +4990,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-13": # templated "build-images-chunk-13"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -5282,13 +5030,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -5372,63 +5113,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -5454,7 +5181,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -5531,7 +5258,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-14": # templated "build-images-chunk-14"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -5571,13 +5298,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -5661,63 +5381,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -5743,7 +5449,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -5820,7 +5526,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-15": # templated "build-images-chunk-15"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -5860,13 +5566,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -5950,63 +5649,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -6032,7 +5717,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -6109,7 +5794,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
   "build-images-chunk-16": # templated "build-images-chunk-16"
     needs: [ "matrix_prep", "all-artifacts-ready" ]
     timeout-minutes: 240
@@ -6149,13 +5834,6 @@ jobs:
           clean: false # true is default.
           path: userpatches.repo
 
-      - name: Checkout jethome-tools repository
-        uses: actions/checkout@v6
-        with:
-          repository: jethome-ru/jethome-tools
-          path: tools
-          ref: convert_jhos
-
       - name: "Put userpatches in place, and remove userpatches repo"
         if: ${{ ( env.USERPATCHES_REPOSITORY != '' ) && ( env.USERPATCHES_REF != '' ) }}
         run: |
@@ -6239,63 +5917,49 @@ jobs:
         run: |
           find output
 
-      - name: "Convert image to burn"
+      - name: "Prepare burn image"
         id: convertburn
         run: |
-          if ! command -v "dtc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install device-tree-compiler -y
-          fi
-          if ! command -v "cc" > /dev/null 2>&1; then
-             sudo apt update \
-             && sudo apt install build-essential cpp -y
-          fi
           if ! command -v "zip" > /dev/null 2>&1; then
              sudo apt update \
              && sudo apt install zip -y
           fi
-
-
-          UBOOTDEB=$(find output | grep linux-u-boot | head -n 1)
-          IMG=$(find output | grep  -e  ".*images.*Armbian.*img.xz$" | head -n 1)
-          # Armbian_23.8.0-trunk.52.jh.3.5_Jethubj80_bookworm_current_6.1.32.burn.img
-
-          cd tools
-
-          DEB="../${UBOOTDEB}"
-          dpkg -x "$DEB" output
-          UBOOT=$(find output/usr/lib -name u-boot.nosd.bin | head -n 1)
-          echo UBOOT: ${UBOOT}
-          find ../output
-
           ### 'BETA=yes' 'BOARD=jethubj80' 'BRANCH=current' 'BUILD_DESKTOP=no' 'BUILD_MINIMAL=no' 'RELEASE=bookworm'
           EVALCMD=$(echo ${{ matrix.invocation }} | sed 's/jethome-images//')
           eval ${EVALCMD}
           echo ${EVALCMD}
           case ${BOARD} in
             jethubj100)
-              ./convert.sh ../${IMG} d1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D1,D1P"
               ;;
             jethubj200)
-              ./convert.sh ../${IMG} d2 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="D2"
               ;;
             jethubj80)
-              ./convert.sh ../${IMG} h1 armbian compress output/usr/lib/linux*/u-boot.nosd.bin
               SUPPORTED="H1"
               ;;
             *)
               echo "Unsupported board" ${BOARD}
-              echo "Error in convert: Unsupported board" ${BOARD} >> GITHUB_STEP_SUMMARY
+              echo "Error in burn image: Unsupported board" ${BOARD} >> $GITHUB_STEP_SUMMARY
               exit 200
               ;;
           esac
-          rm -rf output/usr
-
-          IMGBURN=$(find output | grep  -e  "Armbian.*burn.img.zip$" | head -n 1)
+          # The jethub-burn extension writes <image>.burn.img.xz next to the SD card image.
+          IMG=$(find output/images -name 'Armbian*.img.xz' ! -name '*.burn.img.xz' | head -n 1)
+          BURNXZ=$(find output/images -name 'Armbian*.burn.img.xz' | head -n 1)
+          echo IMG: ${IMG}
+          echo BURNXZ: ${BURNXZ}
+          [ -z "${IMG}" ] && exit 50
+          [ -z "${BURNXZ}" ] && exit 50
+          # fw.jethome.ru and the release get the burn image as <image>.burn.img.zip
+          BURNIMG=$(basename "${BURNXZ}" .xz)
+          rm -rf burn-zip
+          mkdir -p burn-zip
+          xz -dc "${BURNXZ}" > "burn-zip/${BURNIMG}"
+          (cd burn-zip && zip "${BURNIMG}.zip" "${BURNIMG}" && rm "${BURNIMG}")
+          IMGBURN="burn-zip/${BURNIMG}.zip"
           echo IMGBURN: ${IMGBURN}
-          [ -z "${IMGBURN}" ] && exit 50
+          [ -f "${IMGBURN}" ] || exit 50
 
           if [ "${BETA}" == "yes" ]; then
             case "${{ env.BUILD_REF }}" in
@@ -6321,7 +5985,7 @@ jobs:
           echo "release=${RELEASE}" >> $GITHUB_OUTPUT
           echo "supported=${SUPPORTED}" >> $GITHUB_OUTPUT
           echo "image=${IMG}" >> $GITHUB_OUTPUT
-          echo "imageburn=tools/${IMGBURN}" >> $GITHUB_OUTPUT
+          echo "imageburn=${IMGBURN}" >> $GITHUB_OUTPUT
 
       - name: Sign burn
         env:
@@ -6398,7 +6062,7 @@ jobs:
 
       - name: "Runner clean ${{ needs.matrix_prep.outputs.version }}"
         if: always()
-        run: sudo rm -rfv output/images userpatches/VERSION
+        run: sudo rm -rfv output/images burn-zip userpatches/VERSION
 
 # template file: 750.single_repo.yaml
 
