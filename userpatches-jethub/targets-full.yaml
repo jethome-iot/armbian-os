@@ -23,8 +23,8 @@ lists:
     - { BOARD: jethubj80, BRANCH: edge }
 
   fast-hdmi: &fast-hdmi
-    - { BOARD: jethubj200, BRANCH: current, ENABLE_EXTENSIONS: "mesa-vpu" }
-    - { BOARD: jethubj200, BRANCH: edge, ENABLE_EXTENSIONS: "mesa-vpu" }
+    - { BOARD: jethubj200, BRANCH: current }
+    - { BOARD: jethubj200, BRANCH: edge }
 
 targets:
 
@@ -55,19 +55,6 @@ targets:
     items:
       - *headless
       - *fast-hdmi
-
-  full-cli-oldstable-ubuntu:
-    enabled: yes
-    configs: [ jethome-images ]
-    pipeline:
-      gha: *armbian-gha
-      build-image: "yes"
-    vars:
-      RELEASE: jammy
-      BUILD_MINIMAL: "no"
-      BUILD_DESKTOP: "no"
-    items:
-      - *headless
 
   full-cli-stable-ubuntu:
     enabled: yes

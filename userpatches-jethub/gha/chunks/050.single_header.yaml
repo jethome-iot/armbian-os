@@ -15,7 +15,7 @@ on:
       ref:
         description: 'Branch, tag, or SHA to build'
         required: true
-        default: 'main-jethub'
+        default: '[[build_ref]]'
       skipImages:
         description: 'Skip building images? no = build images, yes = skip images'
         required: true
@@ -70,7 +70,7 @@ env:
 
   # For easier reuse across the multiple chunks ('armbian/build' repo)
   BUILD_REPOSITORY: "[[org_and_build_repo]]"
-  BUILD_REF: "${{ inputs.ref || inputs.branch || 'main-jethub' }}" # branch or tag or sha1
+  BUILD_REF: "${{ inputs.ref || inputs.branch || '[[build_ref]]' }}" # branch or tag or sha1
 
   # For easier reuse across the multiple chunks ('armbian/os' repo)
   USERPATCHES_REPOSITORY: "[[org_and_userpatches_repo]]"
