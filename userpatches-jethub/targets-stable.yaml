@@ -54,20 +54,6 @@ targets:
       - *headless
       - *fast-hdmi
 
-  full-cli-oldstable-ubuntu:
-    enabled: yes
-    configs: [ jethome-images ]
-    pipeline:
-      gha: *armbian-gha
-      build-image: "yes"
-    vars:
-      RELEASE: jammy
-      BUILD_MINIMAL: "no"
-      BUILD_DESKTOP: "no"
-    items:
-      - *headless
-      - *fast-hdmi
-
   full-cli-stable-ubuntu:
     enabled: yes
     configs: [ jethome-images ]
