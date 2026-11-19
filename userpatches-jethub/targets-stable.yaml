@@ -21,7 +21,7 @@ lists:
     - { BOARD: jethubj80, BRANCH: current }
 
   fast-hdmi: &fast-hdmi
-    - { BOARD: jethubj200, BRANCH: current, ENABLE_EXTENSIONS: "mesa-vpu" }
+    - { BOARD: jethubj200, BRANCH: current }
 
 
 targets:
